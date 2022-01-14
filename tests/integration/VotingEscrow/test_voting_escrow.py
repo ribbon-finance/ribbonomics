@@ -5,7 +5,7 @@ from tests.conftest import approx
 H = 3600
 DAY = 86400
 WEEK = 7 * DAY
-MAXTIME = 126144000
+MAXTIME = 63072000
 TOL = 120 / WEEK
 
 
