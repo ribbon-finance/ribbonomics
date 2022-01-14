@@ -6,7 +6,7 @@ from brownie.test import strategy
 from brownie_tokens import ERC20
 
 WEEK = 86400 * 7
-MAX_TIME = 86400 * 365 * 4
+MAX_TIME = 86400 * 365 * 2
 GAS_LIMIT = 4_000_000
 
 
@@ -58,8 +58,8 @@ class StateMachine:
                     st_value, unlock_time, {"from": st_account, "gas": GAS_LIMIT}
                 )
 
-        elif unlock_time > chain.time() + 86400 * 365 * 4:
-            with brownie.reverts("Voting lock can be 4 years max"):
+        elif unlock_time > chain.time() + 86400 * 365 * 2:
+            with brownie.reverts("Voting lock can be 2 years max"):
                 self.voting_escrow.create_lock(
                     st_value, unlock_time, {"from": st_account, "gas": GAS_LIMIT}
                 )
@@ -111,8 +111,8 @@ class StateMachine:
                     unlock_time, {"from": st_account, "gas": GAS_LIMIT}
                 )
 
-        elif unlock_time > chain.time() + 86400 * 365 * 4:
-            with brownie.reverts("Voting lock can be 4 years max"):
+        elif unlock_time > chain.time() + 86400 * 365 * 2:
+            with brownie.reverts("Voting lock can be 2 years max"):
                 self.voting_escrow.increase_unlock_time(
                     unlock_time, {"from": st_account, "gas": GAS_LIMIT}
                 )
