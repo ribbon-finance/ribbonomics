@@ -290,7 +290,7 @@ def test_gauge_integral_extra(accounts, chain, mock_lp_token, token, gauge_v3, m
             gauge_v3.user_checkpoint(alice, {"from": alice})
             update_integral()
             print(i, dt / 86400, integral, gauge_v3.integrate_fraction(alice))
-            assert approx(gauge_v3.integrate_fraction(alice), integral, 1e-2)
+            assert approx(gauge_v3.integrate_fraction(alice), integral, 1)
         else:
             update_integral()
             gauge_v3.user_checkpoint(bob, {"from": bob})
