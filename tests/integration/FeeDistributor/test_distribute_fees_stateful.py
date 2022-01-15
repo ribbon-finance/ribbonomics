@@ -97,9 +97,7 @@ class StateMachine:
 
         if self._check_active_lock(st_acct):
             until = ((self.locked_until[st_acct] // WEEK) + st_weeks) * WEEK
-            until = min(until, (chain.time() + YEAR * 2) // WEEK * WEEK)
-            print(self.voting_escrow.locked(st_acct))
-            print(until)
+            until = min(until + 100, (chain.time() + YEAR * 2) // WEEK * WEEK)
 
             self.voting_escrow.increase_unlock_time(until, {"from": st_acct})
             self.locked_until[st_acct] = until
