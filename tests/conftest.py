@@ -92,10 +92,14 @@ def voting_escrow(VotingEscrow, accounts, token):
         token, "Voting-escrowed CRV", "veCRV", accounts[0], {"from": accounts[0]}
     )
 
+@pytest.fixture(scope="module")
+def delegation_proxy(DelegationProxy, accounts, voting_escrow):
+    yield DelegationProxy.deploy("0x0000000000000000000000000000000000000000", voting_escrow, accounts[0], accounts[0], {"from": accounts[0]})
+
 
 @pytest.fixture(scope="module")
-def gauge_controller(GaugeController, accounts, token, voting_escrow):
-    yield GaugeController.deploy(token, voting_escrow, accounts[0], accounts[0], {"from": accounts[0]})
+def gauge_controller(GaugeController, accounts, token, delegation_proxy, voting_escrow):
+    yield GaugeController.deploy(token, voting_escrow, delegation_proxy, accounts[0], {"from": accounts[0]})
 
 
 @pytest.fixture(scope="module")
@@ -145,9 +149,8 @@ def gauge_v3(LiquidityGaugeV3, alice, mock_lp_token, minter):
     yield LiquidityGaugeV3.deploy(mock_lp_token, minter, alice, {"from": alice})
 
 @pytest.fixture(scope="module")
-def gauge_v3_test(LiquidityGaugeV3_test, alice, mock_lp_token, minter):
-    yield LiquidityGaugeV3_test.deploy(mock_lp_token, minter, alice, {"from": alice})
-
+def gauge_v4(LiquidityGaugeV4, alice, mock_lp_token, minter):
+    yield LiquidityGaugeV4.deploy(mock_lp_token, minter, alice, {"from": alice})
 
 @pytest.fixture(scope="module")
 def rewards_only_gauge(RewardsOnlyGauge, alice, mock_lp_token):
