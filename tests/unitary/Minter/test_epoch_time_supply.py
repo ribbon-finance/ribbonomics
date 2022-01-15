@@ -12,10 +12,10 @@ def test_start_epoch_time_write(accounts, chain, three_gauges, minter, token):
     assert minter.start_epoch_time() == creation_time
 
     # the state-changing function should show the changed value
-    assert minter.start_epoch_time_write().return_value == creation_time + WEEK
+    assert minter.start_epoch_time_write().return_value == creation_time + WEEK * 2
 
     # after calling the state-changing function, the view function is changed
-    assert minter.start_epoch_time() == creation_time + WEEK
+    assert minter.start_epoch_time() == creation_time + WEEK * 2
 
 
 def test_start_epoch_time_write_same_epoch(accounts, chain, three_gauges, minter, token):
