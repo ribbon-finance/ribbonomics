@@ -13,10 +13,9 @@ def test_claim_no_deposit(alice, bob, chain, gauge_v4, mock_lp_token, reward_con
     coin_reward._mint_for_testing(reward_contract, REWARD)
     reward_contract.notifyRewardAmount(REWARD, {"from": alice})
 
-    gauge_v4.set_rewards(
+    gauge_v4.add_reward(
+        coin_reward,
         reward_contract,
-        "0xa694fc3a2e1a7d4d3d18b9120000000000000000000000000000000000000000",
-        [coin_reward] + [ZERO_ADDRESS] * 7,
         {"from": alice},
     )
 

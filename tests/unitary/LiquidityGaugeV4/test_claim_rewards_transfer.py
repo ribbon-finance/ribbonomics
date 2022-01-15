@@ -28,15 +28,14 @@ def initial_setup(
     mock_lp_token.approve(gauge_v4, 2 ** 256 - 1, {"from": alice})
     gauge_v4.deposit(10 ** 18, {"from": alice})
 
-    # add rewards
-    sigs = [
-        reward_contract.stake.signature[2:],
-        reward_contract.withdraw.signature[2:],
-        reward_contract.getReward.signature[2:],
-    ]
-    sigs = f"0x{sigs[0]}{sigs[1]}{sigs[2]}{'00' * 20}"
+    reward_tokens = [coin_reward, ZERO_ADDRESS]
 
-    gauge_v4.set_rewards(reward_contract, sigs, [coin_reward] + [ZERO_ADDRESS] * 7, {"from": alice})
+    for i in range(2):
+            gauge_v4.add_reward(
+                reward_tokens[i],
+                reward_contract,
+                {"from": alice},
+            )
 
     # fund rewards
     coin_reward._mint_for_testing(reward_contract, REWARD)
@@ -64,17 +63,3 @@ def test_transfer_does_not_trigger_claim_for_receiver(alice, bob, chain, gauge_v
 
     for acct in (alice, bob):
         assert coin_reward.balanceOf(acct) == 0
-
-
-def test_claim_rewards_stil_accurate(alice, bob, chain, gauge_v4, coin_reward):
-    amount = gauge_v4.balanceOf(alice)
-
-    gauge_v4.transfer(bob, amount, {"from": alice})
-
-    # sleep half way through the reward period
-    chain.sleep(int(86400 * 3.5))
-
-    for acct in (alice, bob):
-        gauge_v4.claim_rewards({"from": acct})
-
-        assert math.isclose(coin_reward.balanceOf(acct), REWARD // 2, rel_tol=0.01)
