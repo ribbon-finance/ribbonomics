@@ -20,7 +20,7 @@ def test_commit_new_rate(accounts, chain, three_gauges, minter, token):
     assert minter.committed_rate() == 14880952380952380952
     assert minter.rate() == 761033399470899470
 
-    chain.sleep(604801)
+    chain.sleep(1209601)
     minter.update_mining_parameters({"from": accounts[0]})
     assert minter.committed_rate() != 9_000_000 * 10 ** 18 / WEEK
     assert minter.rate() == 14880952380952380952
@@ -36,12 +36,12 @@ def test_commit_new_rate_zero(accounts, chain, three_gauges, minter, token):
     assert minter.committed_rate() == 0
     assert minter.rate() == 761033399470899470
 
-    chain.sleep(604801)
+    chain.sleep(1209601)
     minter.update_mining_parameters({"from": accounts[0]})
     assert minter.committed_rate() != 0
     assert minter.rate() == 0
 
-    chain.sleep(604801)
+    chain.sleep(1209601)
     minter.update_mining_parameters({"from": accounts[0]})
     assert minter.committed_rate() != 0
     assert minter.rate() == 0
