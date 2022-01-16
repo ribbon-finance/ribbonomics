@@ -97,7 +97,7 @@ class StateMachine:
 
         if self._check_active_lock(st_acct):
             until = ((self.locked_until[st_acct] // WEEK) + st_weeks) * WEEK
-            until = min(until + 100, (chain.time() + YEAR * 2) // WEEK * WEEK)
+            until = min(until, (chain.time() + YEAR * 2) // WEEK * WEEK)
 
             self.voting_escrow.increase_unlock_time(until, {"from": st_acct})
             self.locked_until[st_acct] = until
@@ -232,7 +232,7 @@ def test_stateful(state_machine, accounts, voting_escrow, fee_distributor, coin_
         token.transfer(accounts[i], 10 ** 18 * 10000000, {"from": accounts[0]})
 
     # accounts[0] locks 10,000,000 tokens for 2 years - longer than the maximum duration of the test
-    voting_escrow.create_lock(10 ** 18 * 10000000, chain.time() + YEAR * 2, {"from": accounts[0]})
+    voting_escrow.create_lock(10 ** 18 * 10000000, chain.time() + YEAR, {"from": accounts[0]})
 
     # a week later we deploy the fee distributor
     chain.sleep(WEEK)
