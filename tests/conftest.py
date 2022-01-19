@@ -152,7 +152,7 @@ def gauge_v4(LiquidityGaugeV4, alice, mock_lp_token, minter):
     yield LiquidityGaugeV4.deploy(mock_lp_token, minter, alice, {"from": alice})
 
 @pytest.fixture(scope="module")
-def gauge_v5(LiquidityGaugeV5, alice, token, mock_lp_token):
+def gauge_v5(LiquidityGaugeV5, alice, token, mock_lp_token, minter):
     source = LiquidityGaugeV5._build["source"].replace(
         "0xD533a949740bb3306d119CC777fa900bA034cd52", token.address, 1
     )

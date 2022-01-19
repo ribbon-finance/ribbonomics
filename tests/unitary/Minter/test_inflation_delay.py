@@ -10,13 +10,13 @@ def test_rate(accounts, chain, three_gauges, minter, token):
     assert minter.rate() > 0
 
 # changes to new rate
-def test_commit_new_rate(accounts, chain, three_gauges, minter, token):
+def test_commit_next_emission(accounts, chain, three_gauges, minter, token):
     chain.sleep(86401)
     minter.update_mining_parameters({"from": accounts[0]})
 
     assert minter.rate() == 413359788359788359
 
-    minter.commit_new_rate(9_000_000 * 10 ** 18, {"from": accounts[0]})
+    minter.commit_next_emission(9_000_000 * 10 ** 18, {"from": accounts[0]})
     assert minter.committed_rate() == 14880952380952380952
     assert minter.rate() == 413359788359788359
 
@@ -26,13 +26,13 @@ def test_commit_new_rate(accounts, chain, three_gauges, minter, token):
     assert minter.rate() == 14880952380952380952
 
 # changes to new rate
-def test_commit_new_rate_zero(accounts, chain, three_gauges, minter, token):
+def test_commit_next_emission_zero(accounts, chain, three_gauges, minter, token):
     chain.sleep(86401)
     minter.update_mining_parameters({"from": accounts[0]})
 
     assert minter.rate() == 413359788359788359
 
-    minter.commit_new_rate(0, {"from": accounts[0]})
+    minter.commit_next_emission(0, {"from": accounts[0]})
     assert minter.committed_rate() == 0
     assert minter.rate() == 413359788359788359
 

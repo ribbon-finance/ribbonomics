@@ -163,19 +163,19 @@ def test_recover_balance(accounts, chain, three_gauges, minter, token):
 
 def test_update_emergency_return(accounts, chain, three_gauges, minter, token):
     assert minter.future_emergency_return() == ZERO_ADDRESS
-    minter.commit_transfer_emergency_return(accounts[0], {"from": accounts[0]})
-    assert minter.future_emergency_return() == accounts[0]
-    assert minter.emergency_return() == ZERO_ADDRESS
-    minter.apply_transfer_emergency_return({"from": accounts[0]})
+    minter.commit_transfer_emergency_return(accounts[1], {"from": accounts[0]})
+    assert minter.future_emergency_return() == accounts[1]
     assert minter.emergency_return() == accounts[0]
+    minter.apply_transfer_emergency_return({"from": accounts[0]})
+    assert minter.emergency_return() == accounts[1]
 
 def test_transfer_ownership(accounts, chain, three_gauges, minter, token):
     assert minter.future_admin() == ZERO_ADDRESS
-    minter.commit_transfer_ownership(accounts[0], {"from": accounts[0]})
-    assert minter.future_admin() == accounts[0]
-    assert minter.admin() == ZERO_ADDRESS
-    minter.apply_transfer_ownership({"from": accounts[0]})
+    minter.commit_transfer_ownership(accounts[1], {"from": accounts[0]})
+    assert minter.future_admin() == accounts[1]
     assert minter.admin() == accounts[0]
+    minter.apply_transfer_ownership({"from": accounts[0]})
+    assert minter.admin() == accounts[1]
 
 def test_prevent_update_emergency_when_zero(accounts, chain, three_gauges, minter, token):
     with brownie.reverts("dev: emergency return not set"):
