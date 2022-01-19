@@ -189,11 +189,11 @@ def test_set_minter_admin_only(accounts, chain, three_gauges, minter, token):
     with brownie.reverts("dev: admin only"):
         minter.commit_transfer_emergency_return(accounts[2], {"from": accounts[1]})
     with brownie.reverts("dev: admin only"):
-        minter.apply_transfer_emergency_return(accounts[2], {"from": accounts[1]})
+        minter.apply_transfer_emergency_return({"from": accounts[1]})
     with brownie.reverts("dev: admin only"):
         minter.commit_transfer_ownership(accounts[2], {"from": accounts[1]})
     with brownie.reverts("dev: admin only"):
-        minter.apply_transfer_ownership(accounts[2], {"from": accounts[1]})
+        minter.apply_transfer_ownership({"from": accounts[1]})
     with brownie.reverts("dev: admin only"):
         minter.commit_next_emission(100, {"from": accounts[1]})
     with brownie.reverts("dev: admin only"):
