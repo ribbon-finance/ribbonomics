@@ -10,6 +10,7 @@ GAUGE_TYPES = [0, 0, 1]
 MONTH = 86400 * 30
 WEEK = 7 * 86400
 
+from brownie import ZERO_ADDRESS
 
 @pytest.fixture(scope="module", autouse=True)
 def minter_setup(accounts, mock_lp_token, token, minter, gauge_controller, three_gauges, chain):
@@ -160,16 +161,44 @@ def test_recover_balance(accounts, chain, three_gauges, minter, token):
     minter.recover_balance(token, {"from": accounts[0]})
     assert token.balanceOf(accounts[0]) == 1_303_030_303 * 10 ** 18
 
+def test_update_emergency_return(accounts, chain, three_gauges, minter, token):
+    assert minter.future_emergency_return() == ZERO_ADDRESS
+    minter.commit_transfer_emergency_return(accounts[0], {"from": accounts[0]})
+    assert minter.future_emergency_return() == accounts[0]
+    assert minter.emergency_return() == ZERO_ADDRESS
+    minter.apply_transfer_emergency_return({"from": accounts[0]})
+    assert minter.emergency_return() == accounts[0]
+
+def test_transfer_ownership(accounts, chain, three_gauges, minter, token):
+    assert minter.future_admin() == ZERO_ADDRESS
+    minter.commit_transfer_ownership(accounts[0], {"from": accounts[0]})
+    assert minter.future_admin() == accounts[0]
+    assert minter.admin() == ZERO_ADDRESS
+    minter.apply_transfer_ownership({"from": accounts[0]})
+    assert minter.admin() == accounts[0]
+
+def test_prevent_update_emergency_when_zero(accounts, chain, three_gauges, minter, token):
+    with brownie.reverts("dev: emergency return not set"):
+        minter.apply_transfer_emergency_return({"from": accounts[0]})
+
+def test_prevent_transfer_ownership_when_zero(accounts, chain, three_gauges, minter, token):
+    with brownie.reverts("dev: admin not set"):
+        minter.apply_transfer_ownership({"from": accounts[0]})
+
 def test_set_minter_admin_only(accounts, chain, three_gauges, minter, token):
     with brownie.reverts("dev: admin only"):
-        minter.change_emergency_return(accounts[2], {"from": accounts[1]})
+        minter.commit_transfer_emergency_return(accounts[2], {"from": accounts[1]})
     with brownie.reverts("dev: admin only"):
-        minter.change_admin(accounts[2], {"from": accounts[1]})
+        minter.apply_transfer_emergency_return(accounts[2], {"from": accounts[1]})
     with brownie.reverts("dev: admin only"):
-        minter.commit_new_rate(100, {"from": accounts[1]})
+        minter.commit_transfer_ownership(accounts[2], {"from": accounts[1]})
+    with brownie.reverts("dev: admin only"):
+        minter.apply_transfer_ownership(accounts[2], {"from": accounts[1]})
+    with brownie.reverts("dev: admin only"):
+        minter.commit_next_emission(100, {"from": accounts[1]})
     with brownie.reverts("dev: admin only"):
         minter.recover_balance(token, {"from": accounts[1]})
 
 def test_prevent_fatfinger(accounts, chain, three_gauges, minter, token):
     with brownie.reverts("dev: preventing fatfinger"):
-        minter.commit_new_rate(10_000_001, {"from": accounts[0]})
+        minter.commit_next_emission(10_000_001 * 10 ** 18, {"from": accounts[0]})
