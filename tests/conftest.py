@@ -143,7 +143,6 @@ def liquidity_gauge(LiquidityGauge, accounts, mock_lp_token, minter):
 def gauge_v2(LiquidityGaugeV2, alice, mock_lp_token, minter):
     yield LiquidityGaugeV2.deploy(mock_lp_token, minter, alice, {"from": alice})
 
-
 @pytest.fixture(scope="module")
 def gauge_v3(LiquidityGaugeV3, alice, mock_lp_token, minter):
     yield LiquidityGaugeV3.deploy(mock_lp_token, minter, alice, {"from": alice})
@@ -151,6 +150,14 @@ def gauge_v3(LiquidityGaugeV3, alice, mock_lp_token, minter):
 @pytest.fixture(scope="module")
 def gauge_v4(LiquidityGaugeV4, alice, mock_lp_token, minter):
     yield LiquidityGaugeV4.deploy(mock_lp_token, minter, alice, {"from": alice})
+
+@pytest.fixture(scope="module")
+def gauge_v5(LiquidityGaugeV5, alice, token, mock_lp_token, minter):
+    source = LiquidityGaugeV5._build["source"].replace(
+        "0xD533a949740bb3306d119CC777fa900bA034cd52", token.address, 1
+    )
+    NewLiquidityGaugeV5 = compile_source(source, vyper_version="0.3.1").Vyper
+    yield NewLiquidityGaugeV5.deploy(mock_lp_token, minter, alice, {"from": alice})
 
 @pytest.fixture(scope="module")
 def rewards_only_gauge(RewardsOnlyGauge, alice, mock_lp_token):

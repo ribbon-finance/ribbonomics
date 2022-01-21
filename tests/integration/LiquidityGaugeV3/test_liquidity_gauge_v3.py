@@ -125,7 +125,7 @@ def test_gauge_integral_same_claimable(accounts, chain, mock_lp_token, token, ga
         is_deposit = random() < 0.2
         # new
         if(i % 10 == 0 and i > 0):
-            minter.commit_new_rate(10_000 * (80-i), {"from": accounts[0]})
+            minter.commit_next_emission(10_000 * (80-i) * 10 ** 18 , {"from": accounts[0]})
             chain.sleep(minter.start_epoch_time() + WEEK - chain[-1].timestamp + 100)
             chain.mine()
 
@@ -229,7 +229,7 @@ def test_gauge_integral_extra(accounts, chain, mock_lp_token, token, gauge_v3, m
 
         # new
         if(i % 5 == 0 and i > 0):
-            minter.commit_new_rate(10_000 * (40-i), {"from": accounts[0]})
+            minter.commit_next_emission(10_000 * (40-i) * 10 ** 18, {"from": accounts[0]})
             chain.sleep(minter.start_epoch_time() + WEEK - chain[-1].timestamp + 100)
             chain.mine()
 
