@@ -104,8 +104,11 @@ nonces: public(HashMap[address, uint256])
 future_epoch_time: public(uint256)
 
 balanceOf: public(HashMap[address, uint256])
+adjustedBalanceOf: public(HashMap[address, uint256])git reset HEAD~
 totalSupply: public(uint256)
 allowance: public(HashMap[address, HashMap[address, uint256]])
+
+whitelisted_custody: public(HashMap[address, bool])
 
 working_balances: public(HashMap[address, uint256])
 working_supply: public(uint256)
@@ -222,7 +225,7 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool, _r
     user_balance: uint256 = 0
     receiver: address = _receiver
     if _user != ZERO_ADDRESS:
-        user_balance = self.balanceOf[_user]
+        user_balance = self.adjustedBalanceOf[_user]
         if _claim and _receiver == ZERO_ADDRESS:
             # if receiver is not explicitly declared, check if a default receiver is set
             receiver = self.rewards_receiver[_user]
@@ -353,7 +356,7 @@ def user_checkpoint(addr: address) -> bool:
     """
     assert msg.sender in [addr, MINTER]  # dev: unauthorized
     self._checkpoint(addr)
-    self._update_liquidity_limit(addr, self.balanceOf[addr], self.totalSupply)
+    self._update_liquidity_limit(addr, self.adjustedBalanceOf[addr], self.totalSupply)
     return True
 
 
@@ -397,7 +400,7 @@ def claimable_reward(_user: address, _reward_token: address) -> uint256:
         integral += (duration * self.reward_data[_reward_token].rate * 10**18 / total_supply)
 
     integral_for: uint256 = self.reward_integral_for[_reward_token][_user]
-    new_claimable: uint256 = self.balanceOf[_user] * (integral - integral_for) / 10**18
+    new_claimable: uint256 = self.adjustedBalanceOf[_user] * (integral - integral_for) / 10**18
 
     return shift(self.claim_data[_user][_reward_token], -128) + new_claimable
 
@@ -438,13 +441,13 @@ def kick(addr: address):
     t_ve: uint256 = VotingEscrow(VOTING_ESCROW).user_point_history__ts(
         addr, VotingEscrow(VOTING_ESCROW).user_point_epoch(addr)
     )
-    _balance: uint256 = self.balanceOf[addr]
+    _balance: uint256 = self.adjustedBalanceOf[addr]
 
     assert ERC20(VOTING_ESCROW).balanceOf(addr) == 0 or t_ve > t_last # dev: kick not allowed
     assert self.working_balances[addr] > _balance * TOKENLESS_PRODUCTION / 100  # dev: kick not needed
 
     self._checkpoint(addr)
-    self._update_liquidity_limit(addr, self.balanceOf[addr], self.totalSupply)
+    self._update_liquidity_limit(addr, self.adjustedBalanceOf[addr], self.totalSupply)
 
 
 @external
@@ -467,10 +470,12 @@ def deposit(_value: uint256, _addr: address = msg.sender, _claim_rewards: bool =
 
         total_supply += _value
         new_balance: uint256 = self.balanceOf[_addr] + _value
+        new_adjusted_balance: uint256 = self.adjustedBalanceOf[_addr] + _value
         self.balanceOf[_addr] = new_balance
+        self.adjustedBalanceOf[_addr] = new_adjusted_balance
         self.totalSupply = total_supply
 
-        self._update_liquidity_limit(_addr, new_balance, total_supply)
+        self._update_liquidity_limit(_addr, new_adjusted_balance, total_supply)
 
         ERC20(LP_TOKEN).transferFrom(msg.sender, self, _value)
 
@@ -496,10 +501,12 @@ def withdraw(_value: uint256, _claim_rewards: bool = False):
 
         total_supply -= _value
         new_balance: uint256 = self.balanceOf[msg.sender] - _value
+        new_adjusted_balance: uint256 = self.adjustedBalanceOf[msg.sender] - _value
         self.balanceOf[msg.sender] = new_balance
+        self.adjustedBalanceOf[msg.sender] = new_adjusted_balance
         self.totalSupply = total_supply
 
-        self._update_liquidity_limit(msg.sender, new_balance, total_supply)
+        self._update_liquidity_limit(msg.sender, new_adjusted_balance, total_supply)
 
         ERC20(LP_TOKEN).transfer(msg.sender, _value)
 
@@ -515,17 +522,26 @@ def _transfer(_from: address, _to: address, _value: uint256):
     if _value != 0:
         total_supply: uint256 = self.totalSupply
         is_rewards: bool = self.reward_count != 0
+        is_whitelisted_custody_from: bool = self.whitelisted_custody[_from]
+        is_whitelisted_custody_to: bool = self.whitelisted_custody[_to]
+
         if is_rewards:
             self._checkpoint_rewards(_from, total_supply, False, ZERO_ADDRESS)
         new_balance: uint256 = self.balanceOf[_from] - _value
         self.balanceOf[_from] = new_balance
-        self._update_liquidity_limit(_from, new_balance, total_supply)
+        if(!is_whitelisted_custody_from and !is_whitelisted_custody_to):
+          new_adjusted_balance: uint256 = self.adjustedBalanceOf[_from] - _value
+          self.adjustedBalanceOf[_from] = new_adjusted_balance
+          self._update_liquidity_limit(_from, new_adjusted_balance, total_supply)
 
         if is_rewards:
             self._checkpoint_rewards(_to, total_supply, False, ZERO_ADDRESS)
         new_balance = self.balanceOf[_to] + _value
         self.balanceOf[_to] = new_balance
-        self._update_liquidity_limit(_to, new_balance, total_supply)
+        if(!is_whitelisted_custody_to):
+          new_adjusted_balance: uint256 = self.adjustedBalanceOf[_to] + _value
+          self.adjustedBalanceOf[_to] = new_adjusted_balance
+          self._update_liquidity_limit(_to, new_adjusted_balance, total_supply)
 
     log Transfer(_from, _to, _value)
 
@@ -733,6 +749,28 @@ def set_killed(_is_killed: bool):
 
     self.is_killed = _is_killed
 
+@external
+def set_whitelist(_custody_contract: address, _is_whitelisted: bool):
+    """
+    @notice Toggle the whitelist status of a custody contract
+    @param _custody_contract Contract that custodies. Used for collateral contract in lending pool
+    @param _is_whitelisted Whether contract is whitelisted
+    """
+    assert msg.sender == self.admin
+
+    self.whitelisted_custody[_custody_contract] = _is_whitelisted
+
+@external
+def decrease_adjusted_balance(_addr: address, _value: uint256):
+    """
+    @notice Decreases adjusted balance of address in case of lending pool liquidation / collateral withdrawal
+    @param _addr Address to decrease adjusted balance for
+    @param _value Amount to decrease adjusted balance by
+    """
+    assert self.whitelisted_custody[msg.sender]
+
+    new_adjusted_balance: uint256 = self.adjustedBalanceOf[_addr] - _value
+    self.adjustedBalanceOf[_addr] = new_adjusted_balance
 
 @external
 def commit_transfer_ownership(addr: address):
