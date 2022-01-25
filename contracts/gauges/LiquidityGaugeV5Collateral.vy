@@ -104,7 +104,7 @@ nonces: public(HashMap[address, uint256])
 future_epoch_time: public(uint256)
 
 balanceOf: public(HashMap[address, uint256])
-adjustedBalanceOf: public(HashMap[address, uint256])git reset HEAD~
+adjustedBalanceOf: public(HashMap[address, uint256])
 totalSupply: public(uint256)
 allowance: public(HashMap[address, HashMap[address, uint256]])
 
