@@ -8,6 +8,7 @@
 interface LiquidityGauge:
     # Presumably, other gauges will provide the same interfaces
     def integrate_fraction(addr: address) -> uint256: view
+    def whitelisted_custody(addr: address) -> bool: view
     def user_checkpoint(addr: address) -> bool: nonpayable
 
 interface ERC20:
@@ -195,7 +196,7 @@ def mint_for(gauge_addr: address, _for: address):
     @param gauge_addr `LiquidityGauge` address to get mintable amount from
     @param _for Address to mint to
     """
-    if self.allowed_to_mint_for[msg.sender][_for]:
+    if self.allowed_to_mint_for[msg.sender][_for] or LiquidityGauge(gauge_addr).whitelisted_custody(msg.sender):
         self._mint_for(gauge_addr, _for)
 
 
