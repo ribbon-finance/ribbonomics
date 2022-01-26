@@ -529,7 +529,7 @@ def _transfer(_from: address, _to: address, _value: uint256):
             self._checkpoint_rewards(_from, total_supply, False, ZERO_ADDRESS)
         new_balance: uint256 = self.balanceOf[_from] - _value
         self.balanceOf[_from] = new_balance
-        if(!is_whitelisted_custody_from and !is_whitelisted_custody_to):
+        if not is_whitelisted_custody_from and not is_whitelisted_custody_to:
           new_adjusted_balance: uint256 = self.adjustedBalanceOf[_from] - _value
           self.adjustedBalanceOf[_from] = new_adjusted_balance
           self._update_liquidity_limit(_from, new_adjusted_balance, total_supply)
@@ -538,7 +538,7 @@ def _transfer(_from: address, _to: address, _value: uint256):
             self._checkpoint_rewards(_to, total_supply, False, ZERO_ADDRESS)
         new_balance = self.balanceOf[_to] + _value
         self.balanceOf[_to] = new_balance
-        if(!is_whitelisted_custody_to):
+        if not is_whitelisted_custody_to:
           new_adjusted_balance: uint256 = self.adjustedBalanceOf[_to] + _value
           self.adjustedBalanceOf[_to] = new_adjusted_balance
           self._update_liquidity_limit(_to, new_adjusted_balance, total_supply)
