@@ -9,6 +9,7 @@ def gauge_vote_setup(accounts, chain, gauge_controller, three_gauges, voting_esc
     gauge_controller.add_type(b"Insurance", {"from": accounts[0]})
     gauge_controller.add_gauge(three_gauges[0], 0, {"from": accounts[0]})
     gauge_controller.add_gauge(three_gauges[1], 1, {"from": accounts[0]})
+    gauge_controller.set_voting_enabled(True, {"from": accounts[0]})
 
     token.approve(voting_escrow, 10 ** 24, {"from": accounts[0]})
     voting_escrow.create_lock(10 ** 24, chain.time() + YEAR, {"from": accounts[0]})
@@ -53,6 +54,10 @@ def test_vote_multiple(accounts, gauge_controller, three_gauges):
 
     assert gauge_controller.vote_user_power(accounts[0]) == 10000
 
+def test_voting_not_enabled(accounts, gauge_controller, three_gauges):
+    gauge_controller.set_voting_enabled(False, {"from": accounts[0]})
+    with brownie.reverts("Voting disabled"):
+        gauge_controller.vote_for_gauge_weights(three_gauges[2], 10000, {"from": accounts[0]})
 
 def test_vote_no_balance(accounts, gauge_controller, three_gauges):
     with brownie.reverts("Your token lock expires too soon"):
