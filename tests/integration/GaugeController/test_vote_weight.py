@@ -21,6 +21,7 @@ def setup(gauge_controller, accounts, three_gauges, token, voting_escrow):
         token.transfer(acct, 10 ** 24, {"from": accounts[0]})
         token.approve(voting_escrow, 10 ** 24, {"from": acct})
 
+    gauge_controller.set_voting_enabled(True, {"from": accounts[0]})
 
 @given(
     st_deposits=strategy("uint256[3]", min_value=10 ** 21, max_value=10 ** 23),
