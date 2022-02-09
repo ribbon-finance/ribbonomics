@@ -5,6 +5,8 @@ from brownie import chain, history
 from brownie.test import strategy
 from brownie_tokens import ERC20
 
+from random import random, randrange
+
 WEEK = 86400 * 7
 MAX_TIME = 86400 * 365 * 2
 GAS_LIMIT = 4_000_000
