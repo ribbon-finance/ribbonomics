@@ -111,7 +111,7 @@ smart_wallet_checker: public(address)
 admin: public(address)  # Can and will be a smart contract
 future_admin: public(address)
 
-is_unlocked: public(address)
+is_unlocked: public(bool)
 
 
 @external
