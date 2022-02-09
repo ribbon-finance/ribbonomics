@@ -473,7 +473,7 @@ def withdraw():
     @dev Only possible if the lock has expired
     """
     _locked: LockedBalance = self.locked[msg.sender]
-    assert block.timestamp >= _locked.end || self.is_unlocked, "The lock didn't expire and funds are not unlocked"
+    assert block.timestamp >= _locked.end or self.is_unlocked, "The lock didn't expire and funds are not unlocked"
     value: uint256 = convert(_locked.amount, uint256)
 
     old_locked: LockedBalance = _locked
