@@ -65,7 +65,7 @@ event ApplyOwnership:
     admin: address
 
 event FundsUnlocked:
-    funds_locked: bool
+    funds_unlocked: bool
 
 event Deposit:
     provider: indexed(address)
