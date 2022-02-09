@@ -33,7 +33,7 @@ def test_set_funds_locked_admin_only(voting_escrow, accounts):
 
     assert voting_escrow.is_unlocked() == True
 
-    voting_escrow.set_funds_locked(False, {"from": accounts[0]})
+    voting_escrow.set_funds_unlocked(False, {"from": accounts[0]})
 
     assert voting_escrow.is_unlocked() == False
 
