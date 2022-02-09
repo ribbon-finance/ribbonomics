@@ -5,6 +5,8 @@ from brownie import chain, history
 from brownie.test import strategy
 from brownie_tokens import ERC20
 
+from random import random, randrange
+
 WEEK = 86400 * 7
 MAX_TIME = 86400 * 365 * 2
 GAS_LIMIT = 4_000_000
@@ -128,9 +130,14 @@ class StateMachine:
         Withdraw tokens from the voting escrow.
         """
         if self.voting_balances[st_account]["unlock_time"] > chain.time():
-            # fail path - before unlock time
-            with brownie.reverts("The lock didn't expire"):
+            if random() < 0.5:
+                # fail path - before unlock time
+                with brownie.reverts("The lock didn't expire and funds are not unlocked"):
+                    self.voting_escrow.withdraw({"from": st_account, "gas": GAS_LIMIT})
+            else:
+                voting_escrow.set_funds_unlocked(True, {"from": self.accounts[0]})
                 self.voting_escrow.withdraw({"from": st_account, "gas": GAS_LIMIT})
+                self.voting_balances[st_account]["value"] = 0
 
         else:
             # success path - specific amount
