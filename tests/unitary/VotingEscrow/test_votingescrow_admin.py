@@ -5,15 +5,18 @@ def test_commit_admin_only(voting_escrow, accounts):
     with brownie.reverts("dev: admin only"):
         voting_escrow.commit_transfer_ownership(accounts[1], {"from": accounts[1]})
 
-
 def test_apply_admin_only(voting_escrow, accounts):
     with brownie.reverts("dev: admin only"):
         voting_escrow.apply_transfer_ownership({"from": accounts[1]})
 
-
 def test_set_funds_locked_admin_only(voting_escrow, accounts):
     with brownie.reverts("dev: admin only"):
         voting_escrow.set_funds_unlocked(true, {"from": accounts[1]})
+
+def test_set_reward_pool_admin_only(voting_escrow, ve_rbn_rewards, accounts):
+    voting_escrow.set_reward_pool(ve_rbn_rewards, {"from": accounts[1]})
+    with brownie.reverts("dev: admin only"):
+        voting_escrow.set_reward_pool(ve_rbn_rewards, {"from": accounts[1]})
 
 def test_commit_transfer_ownership(voting_escrow, accounts):
     voting_escrow.commit_transfer_ownership(accounts[1], {"from": accounts[0]})

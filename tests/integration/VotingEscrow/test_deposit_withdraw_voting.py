@@ -26,10 +26,11 @@ class StateMachine:
     # number of weeks to advance the clock
     st_sleep_duration = strategy("uint", min_value=1, max_value=4)
 
-    def __init__(self, accounts, token, voting_escrow):
+    def __init__(self, accounts, token, voting_escrow, ve_rbn_rewards):
         self.accounts = accounts
         self.token = token
         self.voting_escrow = voting_escrow
+        self.ve_rbn_rewards = ve_rbn_rewards
 
         for acct in accounts:
             token._mint_for_testing(acct, 10 ** 40)
@@ -38,6 +39,7 @@ class StateMachine:
     def setup(self):
         self.token_balances = {i: 10 ** 40 for i in self.accounts}
         self.voting_balances = {i: {"value": 0, "unlock_time": 0} for i in self.accounts}
+        self.voting_escrow.set_reward_pool(ve_rbn_rewards)
 
     def rule_create_lock(self, st_account, st_value, st_lock_duration):
         unlock_time = (chain.time() + st_lock_duration * WEEK) // WEEK * WEEK

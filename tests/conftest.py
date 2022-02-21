@@ -93,6 +93,12 @@ def voting_escrow(VotingEscrow, accounts, token):
     )
 
 @pytest.fixture(scope="module")
+def ve_rbn_rewards(VeRBNRewards, voting_escrow, token):
+    ve_rbn_rewards = VeRBNRewards.deploy(voting_escrow, token, accounts[0], {"from": accounts[0]})
+    voting_escrow.set_reward_pool(ve_rbn_rewards)
+    yield ve_rbn_rewards
+
+@pytest.fixture(scope="module")
 def delegation_proxy(DelegationProxy, accounts, voting_escrow):
     yield DelegationProxy.deploy("0x0000000000000000000000000000000000000000", voting_escrow, accounts[0], accounts[0], {"from": accounts[0]})
 

@@ -9,7 +9,7 @@ MAXTIME = 63072000
 TOL = 120 / WEEK
 
 
-def test_voting_powers(web3, chain, accounts, token, voting_escrow):
+def test_voting_powers(web3, chain, accounts, token, voting_escrow, ve_rbn_rewards):
     """
     Test voting power in the following scenario.
     Alice:
