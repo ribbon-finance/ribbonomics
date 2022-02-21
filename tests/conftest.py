@@ -77,6 +77,21 @@ def charlie(accounts):
 def receiver(accounts):
     yield accounts.at("0x0000000000000000000000000000000000031337", True)
 
+@pytest.fixture
+def whale_amount():
+    yield 10**22
+
+@pytest.fixture
+def whale(accounts, token, whale_amount):
+    token.mint(accounts[1], whale_amount)
+    yield accounts[1]
+
+@pytest.fixture
+def create_token(Token, gov):
+    def create_token(name):
+        return ERC20CRV.deploy(name, {"from": accounts[0]})
+
+    yield create_token
 
 # core contracts
 
@@ -84,7 +99,6 @@ def receiver(accounts):
 @pytest.fixture(scope="module")
 def token(ERC20CRV, accounts):
     yield ERC20CRV.deploy("Curve DAO Token", "CRV", 18, {"from": accounts[0]})
-
 
 @pytest.fixture(scope="module")
 def voting_escrow(VotingEscrow, accounts, token):
