@@ -233,7 +233,7 @@ contract VeRBNRewards {
     function sweep(address _token) external returns (bool) {
         require(msg.sender == gov, "!authorized");
         require(
-            _token != address(rewardToken) || veToken.unlocked(),
+            _token != address(rewardToken) || veToken.is_unlocked(),
             "!rewardToken"
         );
 
