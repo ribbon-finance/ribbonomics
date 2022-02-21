@@ -83,18 +83,18 @@ def whale_amount():
 
 @pytest.fixture
 def whale(accounts, token, whale_amount):
-    token.mint(accounts[1], whale_amount)
     yield accounts[1]
 
 @pytest.fixture
-def create_token(Token, gov):
+def create_token(ERC20CRV, accounts):
     def create_token(name):
-        return ERC20CRV.deploy(name, {"from": accounts[0]})
+        crv = ERC20CRV.deploy(name, name, 18, {"from": accounts[0]})
+        crv.set_minter(accounts[0], {"from": accounts[0]})
+        return crv
 
     yield create_token
 
 # core contracts
-
 
 @pytest.fixture(scope="module")
 def token(ERC20CRV, accounts):
@@ -107,7 +107,7 @@ def voting_escrow(VotingEscrow, accounts, token):
     )
 
 @pytest.fixture(scope="module")
-def ve_rbn_rewards(VeRBNRewards, voting_escrow, token):
+def ve_rbn_rewards(VeRBNRewards, accounts, voting_escrow, token):
     ve_rbn_rewards = VeRBNRewards.deploy(voting_escrow, token, accounts[0], {"from": accounts[0]})
     voting_escrow.set_reward_pool(ve_rbn_rewards)
     yield ve_rbn_rewards
