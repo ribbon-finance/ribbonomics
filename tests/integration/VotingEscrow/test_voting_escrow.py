@@ -9,7 +9,7 @@ MAXTIME = 63072000
 TOL = 120 / WEEK
 
 
-def test_voting_powers(web3, chain, accounts, token, voting_escrow, ve_rbn_rewards):
+def test_voting_powers(web3, chain, accounts, token, voting_escrow):
     """
     Test voting power in the following scenario.
     Alice:
@@ -253,3 +253,60 @@ def test_voting_powers(web3, chain, accounts, token, voting_escrow, ve_rbn_rewar
     w_alice = voting_escrow.getPriorVotes(alice, stages["bob_withdraw_2"][0])
     w_bob = voting_escrow.getPriorVotes(bob, stages["bob_withdraw_2"][0])
     assert w_total == w_alice == w_bob == 0
+
+def test_early_exit(web3, chain, accounts, token, voting_escrow, ve_rbn_rewards):
+    alice, bob = accounts[:2]
+    amount = 1000 * 10**18
+    token.mint(bob, amount, {"from": bob})
+    token.mint(alice, amount, {"from": alice})
+
+    token.approve(voting_escrow.address, amount * 10, {"from": alice})
+    token.approve(voting_escrow.address, amount * 10, {"from": bob})
+
+    chain.sleep((chain[-1].timestamp // WEEK + 1) * WEEK - chain[-1].timestamp)
+    chain.mine()
+
+    chain.sleep(H)
+    voting_escrow.create_lock(amount, chain[-1].timestamp + 2 * WEEK, {"from": alice})
+    voting_escrow.create_lock(amount, chain[-1].timestamp + WEEK, {"from": bob})
+    voting_escrow.force_withdraw({"from": bob})
+    assert voting_escrow.totalSupply() == voting_escrow.balanceOf(alice)
+
+    point_history_1 = voting_escrow.point_history(1).dict()
+    point_history_3 = voting_escrow.point_history(3).dict()
+    assert approx(point_history_1["bias"], rel=10e-4) == point_history_3["bias"]
+    assert approx(point_history_1["slope"], rel=10e-4) == point_history_3["slope"]
+    voting_escrow.force_withdraw({"from": alice})
+    assert voting_escrow.totalSupply() == 0
+    point_history_4 = voting_escrow.point_history(4).dict()
+    assert point_history_4["ts"] == chain[-1].timestamp
+    assert point_history_4["bias"] == 0
+    assert point_history_4["slope"] == 0
+
+def test_unlock_all_locks(web3, chain, accounts, token, voting_escrow, ve_rbn_rewards):
+    alice, bob = accounts[:2]
+    amount = 1000 * 10**18
+    token.mint(bob, amount, {"from": bob})
+    token.mint(alice, amount, {"from": alice})
+
+    token.approve(voting_escrow.address, amount * 10, {"from": alice})
+    token.approve(voting_escrow.address, amount * 10, {"from": bob})
+
+    chain.sleep((chain[-1].timestamp // WEEK + 1) * WEEK - chain[-1].timestamp)
+    chain.mine()
+
+    chain.sleep(H)
+
+    voting_escrow.create_lock(amount, chain[-1].timestamp + 2 * WEEK, {"from": alice})
+    voting_escrow.create_lock(amount, chain[-1].timestamp + WEEK, {"from": bob})
+
+    voting_escrow.set_funds_unlocked(True, {"from": accounts[0]})
+    assert voting_escrow.balanceOf(alice) == 0
+    assert voting_escrow.balanceOf(bob) == 0
+    assert voting_escrow.totalSupply() == 0
+
+    voting_escrow.withdraw({"from": alice})
+    voting_escrow.withdraw({"from": bob})
+
+    assert token.balanceOf(alice) == amount
+    assert token.balanceOf(bob) == amount

@@ -39,7 +39,7 @@ class StateMachine:
     def setup(self):
         self.token_balances = {i: 10 ** 40 for i in self.accounts}
         self.voting_balances = {i: {"value": 0, "unlock_time": 0} for i in self.accounts}
-        self.voting_escrow.set_reward_pool(ve_rbn_rewards)
+        self.voting_escrow.set_reward_pool(ve_rbn_rewards, {"from": accounts[0]})
 
     def rule_create_lock(self, st_account, st_value, st_lock_duration):
         unlock_time = (chain.time() + st_lock_duration * WEEK) // WEEK * WEEK
