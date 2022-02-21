@@ -506,7 +506,7 @@ def withdraw():
 
     assert ERC20(self.token).transfer(msg.sender, value)
 
-    if !_unlocked:
+    if not _unlocked:
       IVeRBNRewards(self.reward_pool).updateReward(msg.sender) # Reward pool snapshot
 
     log Withdraw(msg.sender, value, block.timestamp)
