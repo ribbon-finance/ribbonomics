@@ -284,7 +284,6 @@ def test_unlock_all_locks(web3, chain, accounts, token, voting_escrow, ve_rbn_re
     alice, bob = accounts[:2]
     amount = 1000 * 10**18
     token.transfer(bob, amount, {"from": alice})
-    balance_after = token.balanceOf(alice)
 
     token.approve(voting_escrow.address, amount * 10, {"from": alice})
     token.approve(voting_escrow.address, amount * 10, {"from": bob})
@@ -296,6 +295,8 @@ def test_unlock_all_locks(web3, chain, accounts, token, voting_escrow, ve_rbn_re
 
     voting_escrow.create_lock(amount, chain[-1].timestamp + 2 * WEEK, {"from": alice})
     voting_escrow.create_lock(amount, chain[-1].timestamp + WEEK, {"from": bob})
+
+    balance_after = token.balanceOf(alice)
 
     voting_escrow.set_funds_unlocked(True, {"from": accounts[0]})
 
