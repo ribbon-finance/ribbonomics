@@ -302,5 +302,5 @@ def test_unlock_all_locks(web3, chain, accounts, token, voting_escrow, ve_rbn_re
     voting_escrow.withdraw({"from": alice})
     voting_escrow.withdraw({"from": bob})
 
-    assert token.balanceOf(alice) == balance_after+ amount
+    assert token.balanceOf(alice) == balance_after + amount
     assert token.balanceOf(bob) == amount
