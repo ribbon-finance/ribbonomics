@@ -1,5 +1,3 @@
-
-import pytest
 from tests.conftest import approx
 
 H = 3600
@@ -273,8 +271,8 @@ def test_early_exit(web3, chain, accounts, token, voting_escrow, ve_rbn_rewards)
 
     point_history_1 = voting_escrow.point_history(1).dict()
     point_history_3 = voting_escrow.point_history(3).dict()
-    assert approx(point_history_1["bias"], rel=10e-4) == point_history_3["bias"]
-    assert approx(point_history_1["slope"], rel=10e-4) == point_history_3["slope"]
+    assert approx(point_history_1["bias"], point_history_3["bias"], 10e-4)
+    assert approx(point_history_1["slope"], point_history_3["slope"], 10e-4)
     voting_escrow.force_withdraw({"from": alice})
     assert voting_escrow.totalSupply() == 0
     point_history_4 = voting_escrow.point_history(4).dict()
@@ -286,6 +284,7 @@ def test_unlock_all_locks(web3, chain, accounts, token, voting_escrow, ve_rbn_re
     alice, bob = accounts[:2]
     amount = 1000 * 10**18
     token.transfer(bob, amount, {"from": alice})
+    balance_after = token.balanceOf(alice)
 
     token.approve(voting_escrow.address, amount * 10, {"from": alice})
     token.approve(voting_escrow.address, amount * 10, {"from": bob})
@@ -299,12 +298,9 @@ def test_unlock_all_locks(web3, chain, accounts, token, voting_escrow, ve_rbn_re
     voting_escrow.create_lock(amount, chain[-1].timestamp + WEEK, {"from": bob})
 
     voting_escrow.set_funds_unlocked(True, {"from": accounts[0]})
-    # assert voting_escrow.balanceOf(alice) == 0
-    # assert voting_escrow.balanceOf(bob) == 0
-    # assert voting_escrow.totalSupply() == 0
 
     voting_escrow.withdraw({"from": alice})
     voting_escrow.withdraw({"from": bob})
 
-    assert token.balanceOf(alice) == amount
+    assert token.balanceOf(alice) == balance_after+ amount
     assert token.balanceOf(bob) == amount

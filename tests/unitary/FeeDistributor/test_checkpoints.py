@@ -4,7 +4,7 @@ WEEK = 86400 * 7
 
 
 @pytest.fixture(scope="module")
-def distributor(accounts, chain, fee_distributor, voting_escrow, token):
+def distributor(accounts, chain, fee_distributor, voting_escrow, ve_rbn_rewards, token):
     distributor = fee_distributor()
 
     token.approve(voting_escrow, 2 ** 256 - 1, {"from": accounts[0]})
@@ -28,7 +28,7 @@ def test_checkpoint_total_supply(accounts, chain, distributor, voting_escrow):
     assert distributor.ve_supply(week_epoch) == voting_escrow.totalSupplyAt(week_block)
 
 
-def test_advance_time_cursor(accounts, chain, distributor):
+def test_advance_time_cursor(accounts, chain, distributor, ve_rbn_rewards):
     start_time = distributor.time_cursor()
     chain.sleep(86400 * 365)
     chain.mine()
@@ -48,7 +48,7 @@ def test_advance_time_cursor(accounts, chain, distributor):
     assert distributor.ve_supply(start_time + WEEK * 40) == 0
 
 
-def test_claim_checkpoints_total_supply(accounts, chain, distributor):
+def test_claim_checkpoints_total_supply(accounts, chain, distributor, ve_rbn_rewards):
     start_time = distributor.time_cursor()
 
     distributor.claim({"from": accounts[0]})
@@ -56,7 +56,7 @@ def test_claim_checkpoints_total_supply(accounts, chain, distributor):
     assert distributor.time_cursor() == start_time + WEEK
 
 
-def test_toggle_allow_checkpoint(accounts, chain, distributor):
+def test_toggle_allow_checkpoint(accounts, chain, distributor, ve_rbn_rewards):
 
     last_token_time = distributor.last_token_time()
     chain.sleep(WEEK)

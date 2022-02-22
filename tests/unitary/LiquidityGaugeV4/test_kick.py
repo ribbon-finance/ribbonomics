@@ -4,7 +4,7 @@ MAX_UINT256 = 2 ** 256 - 1
 WEEK = 7 * 86400
 
 
-def test_kick(chain, accounts, gauge_v4, voting_escrow, token, mock_lp_token):
+def test_kick(chain, accounts, gauge_v4, voting_escrow, ve_rbn_rewards, token, mock_lp_token):
     alice, bob = accounts[:2]
     chain.sleep(2 * WEEK + 5)
 

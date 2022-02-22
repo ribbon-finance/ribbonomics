@@ -2,7 +2,7 @@ DAY = 86400
 WEEK = 7 * DAY
 
 
-def test_deposited_after(web3, chain, accounts, voting_escrow, fee_distributor, coin_a, token):
+def test_deposited_after(web3, chain, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
     alice, bob = accounts[0:2]
     amount = 1000 * 10 ** 18
     fee_distributor = fee_distributor()
@@ -29,7 +29,7 @@ def test_deposited_after(web3, chain, accounts, voting_escrow, fee_distributor, 
     assert coin_a.balanceOf(alice) == 0
 
 
-def test_deposited_during(web3, chain, accounts, voting_escrow, fee_distributor, coin_a, token):
+def test_deposited_during(web3, chain, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
     alice, bob = accounts[0:2]
     amount = 1000 * 10 ** 18
 
@@ -57,7 +57,7 @@ def test_deposited_during(web3, chain, accounts, voting_escrow, fee_distributor,
     assert abs(coin_a.balanceOf(alice) - 21 * 10 ** 18) < 10
 
 
-def test_deposited_before(web3, chain, accounts, voting_escrow, fee_distributor, coin_a, token):
+def test_deposited_before(web3, chain, accounts, voting_escrow,ve_rbn_rewards, fee_distributor, coin_a, token):
     alice, bob = accounts[0:2]
     amount = 1000 * 10 ** 18
 
@@ -81,7 +81,7 @@ def test_deposited_before(web3, chain, accounts, voting_escrow, fee_distributor,
     assert abs(coin_a.balanceOf(alice) - 10 ** 19) < 10
 
 
-def test_deposited_twice(web3, chain, accounts, voting_escrow, fee_distributor, coin_a, token):
+def test_deposited_twice(web3, chain, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
     alice, bob = accounts[0:2]
     amount = 1000 * 10 ** 18
 
@@ -110,7 +110,7 @@ def test_deposited_twice(web3, chain, accounts, voting_escrow, fee_distributor, 
     assert abs(10 ** 19 - coin_a.balanceOf(alice) - tokens_to_exclude) < 10
 
 
-def test_deposited_parallel(web3, chain, accounts, voting_escrow, fee_distributor, coin_a, token):
+def test_deposited_parallel(web3, chain, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
     alice, bob, charlie = accounts[0:3]
     amount = 1000 * 10 ** 18
 
