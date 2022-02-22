@@ -305,6 +305,7 @@ def test_mining_with_votelock(
     gauge_controller,
     minter,
     voting_escrow,
+    ve_rbn_rewards,
 ):
     alice, bob = accounts[:2]
     chain.sleep(2 * WEEK + 5)
