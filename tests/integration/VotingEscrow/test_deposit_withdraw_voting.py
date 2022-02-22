@@ -125,7 +125,7 @@ class StateMachine:
             )
             self.voting_balances[st_account]["unlock_time"] = tx.events["Deposit"]["locktime"]
 
-    def rule_withdraw(self, st_account):
+    def rule_withdraw(self, st_account, ve_rbn_rewards):
         """
         Withdraw tokens from the voting escrow.
         """
