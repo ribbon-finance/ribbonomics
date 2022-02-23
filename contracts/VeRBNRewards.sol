@@ -90,8 +90,8 @@ contract VeRBNRewards {
         return _earnedReward(account);
     }
 
-    /** @notice use to update rewards on veYFI balance changes.
-        @dev called by veYFI
+    /** @notice use to update rewards on veRBN balance changes.
+        @dev called by veRBN
      *  @return true
      */
     function updateReward(address _account)
@@ -119,7 +119,7 @@ contract VeRBNRewards {
     /**
      * @notice
      *  Get rewards
-     * @param _lock should it lock rewards into veYFI
+     * @param _lock should it lock rewards into veRBN
      * @return true
      */
     function getReward(bool _lock) external returns (bool) {
