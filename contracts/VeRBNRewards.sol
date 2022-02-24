@@ -13,7 +13,7 @@ import "./interfaces/IVotingEscrow.sol";
 contract VeRBNRewards {
     using SafeERC20 for IERC20;
 
-    IERC20 public rewardToken; // immutable immutable are breaking coverage software should be added back after.
+    IERC20 public rewardToken; // immutable are breaking coverage software should be added back after.
     IVotingEscrow public veToken; // immutable
     uint256 public constant DURATION = 7 days;
     uint256 public periodFinish = 0;
@@ -28,17 +28,18 @@ contract VeRBNRewards {
     mapping(address => uint256) public rewards;
 
     event RewardAdded(uint256 reward);
+    event Donate(uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
     event UpdatedGov(address gov);
 
     constructor(
         address veToken_,
         address rewardToken_,
-        address _gov
+        address gov_
     ) {
         veToken = IVotingEscrow(veToken_);
         rewardToken = IERC20(rewardToken_);
-        gov = _gov;
+        gov = gov_;
     }
 
     modifier _updateReward(address account) {
@@ -142,8 +143,8 @@ contract VeRBNRewards {
         _updateReward(_account)
     {
         uint256 reward = rewards[_account];
-        rewards[_account] = 0;
         if (reward == 0) return;
+        rewards[_account] = 0;
 
         if (_lock) {
             SafeERC20.safeApprove(rewardToken, address(veToken), reward);
@@ -170,6 +171,7 @@ contract VeRBNRewards {
             _amount
         );
         queuedRewards = queuedRewards + _amount;
+        emit Donate(_amount);
         return true;
     }
 
