@@ -137,7 +137,7 @@ class StateMachine:
                 with brownie.reverts("The lock didn't expire and funds are not unlocked"):
                     self.voting_escrow.withdraw({"from": st_account, "gas": GAS_LIMIT})
             else:
-                voting_escrow.set_funds_unlocked(True, {"from": self.accounts[0]})
+                self.voting_escrow.set_funds_unlocked(True, {"from": self.accounts[0]})
                 self.voting_escrow.withdraw({"from": st_account, "gas": GAS_LIMIT})
                 self.voting_balances[st_account]["value"] = 0
 
