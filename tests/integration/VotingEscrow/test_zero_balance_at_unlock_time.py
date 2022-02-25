@@ -5,8 +5,9 @@ WEEK = 86400 * 7
 
 
 @pytest.fixture(scope="module", autouse=True)
-def setup(accounts, token, voting_escrow):
+def setup(accounts, token, voting_escrow, ve_rbn_rewards):
     token.approve(voting_escrow, 10 ** 18, {"from": accounts[0]})
+    voting_escrow.set_reward_pool(ve_rbn_rewards)
 
 
 @given(

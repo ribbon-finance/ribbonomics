@@ -4,7 +4,7 @@ YEAR = 86400 * 365
 
 
 @pytest.fixture(scope="module", autouse=True)
-def gauge_vote_setup(accounts, chain, gauge_controller, three_gauges, voting_escrow, token):
+def gauge_vote_setup(accounts, chain, gauge_controller, three_gauges, voting_escrow, ve_rbn_rewards, token):
     gauge_controller.add_type(b"Insurance", {"from": accounts[0]})
     gauge_controller.add_gauge(three_gauges[0], 0, {"from": accounts[0]})
     gauge_controller.add_gauge(three_gauges[1], 1, {"from": accounts[0]})

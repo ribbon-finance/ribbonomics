@@ -3,7 +3,7 @@ from brownie import ZERO_ADDRESS
 WEEK = 86400 * 7
 
 
-def test_claim_many(alice, bob, charlie, chain, voting_escrow, fee_distributor, coin_a, token):
+def test_claim_many(alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
     amount = 1000 * 10 ** 18
 
     for acct in (alice, bob, charlie):
@@ -35,7 +35,7 @@ def test_claim_many(alice, bob, charlie, chain, voting_escrow, fee_distributor, 
 
 
 def test_claim_many_same_account(
-    alice, bob, charlie, chain, voting_escrow, fee_distributor, coin_a, token
+    alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token
 ):
     amount = 1000 * 10 ** 18
 
