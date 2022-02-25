@@ -35,6 +35,24 @@ def test_ve_rbn_distribution_relock(
     ve_rbn_rewards.getReward(True, {"from": whale})
     assert pytest.approx(voting_escrow.locked(whale)[0]) == rewards + whale_amount
 
+def test_ve_rbn_whitelist(token, accounts, voting_escrow, whale, whale_amount, ve_rbn_rewards):
+    token.transfer(whale, whale_amount, {"from": accounts[0]})
+    token.approve(voting_escrow, whale_amount, {"from": whale})
+    voting_escrow.create_lock(whale_amount, chain.time() + 3600 * 24 * 365, {"from": whale})
+    whale_balance_before = token.balanceOf(whale)
+    rewards = 10**18
+    token.approve(ve_rbn_rewards, rewards)
+    ve_rbn_rewards.queueNewRewards(rewards, {"from": accounts[0]})
+    assert ve_rbn_rewards.rewardRate() == rewards / 7 / 24 / 3600
+    chain.sleep(3600)
+    ve_rbn_rewards.getRewardFor(whale, True, {"from": accounts[0]})
+    assert pytest.approx(token.balanceOf(whale), rel=10e-3) == rewards / 7 / 24
+    chain.sleep(3600 * 24 * 7)
+    voting_escrow_balance_before = token.balanceOf(voting_escrow)
+    ve_rbn_rewards.addToWhitelist(accounts[0], True)
+    ve_rbn_rewards.getRewardFor(whale, True, {"from": accounts[0]})
+    assert pytest.approx(token.balanceOf(whale), rel=10e-3) == rewards / 7 / 24
+    assert token.balanceOf(voting_escrow) > voting_escrow_balance_before
 
 def test_sweep(token, accounts, voting_escrow, ve_rbn_rewards, create_token, whale, whale_amount):
     token.transfer(whale, whale_amount, {"from": accounts[0]})

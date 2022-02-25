@@ -26,11 +26,14 @@ contract VeRBNRewards {
     address public gov;
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
+    // whitelisted addresses have right to claim and lock into veRBN on anothers behalf
+    mapping(address => bool) public whitelist;
 
     event RewardAdded(uint256 reward);
     event Donate(uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
     event UpdatedGov(address gov);
+    event UpdatedWhitelist(address recipient, bool isWhitelisted);
 
     constructor(
         address veToken_,
@@ -109,11 +112,12 @@ contract VeRBNRewards {
      * @notice
      *  Get rewards for an account
      * @dev rewards are transfer to _account
-     * @param account to claim rewards for
+     * @param _account to claim rewards for
+     * @param _lock should it lock rewards into veRBN
      * @return true
      */
-    function getRewardFor(address account) external returns (bool) {
-        _getReward(account, false);
+    function getRewardFor(address _account, bool _lock) external returns (bool) {
+        _getReward(_account, (whitelist[msg.sender] || msg.sender == _account) ? _lock : false);
         return true;
     }
 
@@ -148,7 +152,7 @@ contract VeRBNRewards {
 
         if (_lock) {
             SafeERC20.safeApprove(rewardToken, address(veToken), reward);
-            veToken.deposit_for(msg.sender, reward);
+            veToken.deposit_for(_account, reward);
         } else {
             SafeERC20.safeTransfer(rewardToken, _account, reward);
         }
@@ -230,6 +234,21 @@ contract VeRBNRewards {
         gov = _gov;
         emit UpdatedGov(_gov);
         return true;
+    }
+
+    /**
+     * @notice
+     * add to whitelist
+     * @dev Can be called by gov
+     * @param _addr  address to whitelist
+     * @param _isWhitelist whether to whitelist or blacklist
+     */
+    function addToWhitelist(address _addr, bool _isWhitelist) external {
+        require(msg.sender == gov, "!authorized");
+
+        require(_addr != address(0), "0 address");
+        whitelist[_addr] = _isWhitelist;
+        emit UpdatedWhitelist(_addr, _isWhitelist);
     }
 
     function sweep(address _token) external returns (bool) {

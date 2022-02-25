@@ -81,6 +81,54 @@ def test_deposited_before(web3, chain, accounts, voting_escrow,ve_rbn_rewards, f
     assert abs(coin_a.balanceOf(alice) - 10 ** 19) < 10
 
 
+def test_claim_with_penalty_rewards(web3, chain, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
+    alice, bob = accounts[0:2]
+    amount = 1000 * 10 ** 18
+    fee_distributor = fee_distributor()
+
+    token.approve(voting_escrow.address, amount * 10, {"from": alice})
+    coin_a._mint_for_testing(bob, 100 * 10 ** 18)
+    token.transfer(bob, 2 * amount, {"from": alice})
+
+    for i in range(5):
+        for j in range(7):
+            coin_a.transfer(fee_distributor, 10 ** 18, {"from": bob})
+            fee_distributor.checkpoint_token()
+            fee_distributor.checkpoint_total_supply()
+            chain.sleep(DAY)
+            chain.mine()
+
+    chain.sleep(WEEK)
+    chain.mine()
+
+    voting_escrow.create_lock(amount, chain[-1].timestamp + 10 * WEEK, {"from": alice})
+
+    prev_veRBN_bal = voting_escrow.balanceOf(alice)
+    prev_RBN_bal = token.balanceOf(alice)
+
+    rewards = 1000 * 10**18
+    token.approve(ve_rbn_rewards, rewards, {"from": bob})
+    ve_rbn_rewards.queueNewRewards(rewards, {"from": bob})
+
+    chain.sleep(3600 * 24 * 7)
+    ve_rbn_rewards.addToWhitelist(fee_distributor, True)
+
+    fee_distributor.claim(alice, True, True, {"from": alice})
+
+    assert token.balanceOf(alice) == prev_RBN_bal
+    assert voting_escrow.balanceOf(alice) > prev_veRBN_bal
+
+    token.approve(ve_rbn_rewards, rewards, {"from": bob})
+    ve_rbn_rewards.queueNewRewards(rewards, {"from": bob})
+
+    chain.sleep(3600 * 24 * 7)
+
+    fee_distributor.claim(alice, True, False, {"from": alice})
+
+    assert coin_a.balanceOf(alice) == 0
+
+    assert token.balanceOf(alice) > prev_RBN_bal
+
 def test_deposited_twice(web3, chain, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
     alice, bob = accounts[0:2]
     amount = 1000 * 10 ** 18
