@@ -202,7 +202,7 @@ def claimable(addr: address = msg.sender) -> uint256:
     @param addr Address to query balance for
     @return uint256 Claimable revenue
     """
-    claimable: uint256 = self._claim(_addr, self.voting_escrow,  self.last_token_time / WEEK * WEEK)
+    claimable: uint256 = self._claim(addr, self.voting_escrow,  self.last_token_time / WEEK * WEEK)
     return claimable
 
 @internal
