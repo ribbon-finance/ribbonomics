@@ -299,7 +299,6 @@ def _claim(addr: address, ve: address, _last_token_time: uint256, _is_write: boo
     return to_distribute
 
 
-@view
 @external
 def claimable(addr: address = msg.sender) -> uint256:
     """
