@@ -3,9 +3,9 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def fee_distributor(FeeDistributor, accounts, chain, voting_escrow, coin_a):
+def fee_distributor(FeeDistributor, accounts, chain, voting_escrow, ve_rbn_rewards, coin_a):
     yield FeeDistributor.deploy(
-        voting_escrow, chain.time(), coin_a, accounts[0], accounts[1], {"from": accounts[0]}
+        voting_escrow, ve_rbn_rewards, chain.time(), coin_a, accounts[0], accounts[1], {"from": accounts[0]}
     )
 
 
