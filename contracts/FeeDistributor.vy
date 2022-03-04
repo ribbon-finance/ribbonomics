@@ -194,17 +194,6 @@ def ve_for_at(_user: address, _timestamp: uint256) -> uint256:
     pt: Point = VotingEscrow(ve).user_point_history(_user, epoch)
     return convert(max(pt.bias - pt.slope * convert(_timestamp - pt.ts, int128), 0), uint256)
 
-@view
-@external
-def claimable(addr: address = msg.sender) -> uint256:
-    """
-    @notice Get the claimable revenue (approximation)
-    @param addr Address to query balance for
-    @return uint256 Claimable revenue
-    """
-    claimable: uint256 = self._claim(addr, self.voting_escrow,  self.last_token_time / WEEK * WEEK)
-    return claimable
-
 @internal
 def _checkpoint_total_supply():
     ve: address = self.voting_escrow
@@ -309,6 +298,17 @@ def _claim(addr: address, ve: address, _last_token_time: uint256, _is_write: boo
 
     return to_distribute
 
+
+@view
+@external
+def claimable(addr: address = msg.sender) -> uint256:
+    """
+    @notice Get the claimable revenue (approximation)
+    @param addr Address to query balance for
+    @return uint256 Claimable revenue
+    """
+    claimable: uint256 = self._claim(addr, self.voting_escrow,  self.last_token_time / WEEK * WEEK)
+    return claimable
 
 @external
 @nonreentrant('lock')
