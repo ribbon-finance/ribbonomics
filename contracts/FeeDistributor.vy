@@ -241,7 +241,7 @@ def _claim(addr: address, ve: address, _last_token_time: uint256) -> (uint256, u
 
     if max_user_epoch == 0:
         # No lock = no fees
-        return (0,0,0,0,False)
+        return (0, 0, 0, 0, False)
 
     week_cursor: uint256 = self.time_cursor_of[addr]
     if week_cursor == 0:
@@ -259,7 +259,7 @@ def _claim(addr: address, ve: address, _last_token_time: uint256) -> (uint256, u
         week_cursor = (user_point.ts + WEEK - 1) / WEEK * WEEK
 
     if week_cursor >= _last_token_time:
-        return (0,0,0,0,False)
+        return (0, 0, 0, 0, False)
 
     if week_cursor < _start_time:
         week_cursor = _start_time
