@@ -120,19 +120,14 @@ contract FeeCustody {
         IERC20 asset = IERC20(assets[i]);
         uint256 assetBalance = asset.balanceOf(address(this));
 
-        uint256 multiSigRevenue;
+        uint256 multiSigRevenue = assetBalance.mul(TOTAL_PCT.sub(pctAllocationForRBNLockers)).div(TOTAL_PCT);
 
         // If we are holding the distributionToken itself,
         // do not swap
-        if(address(asset) == address(distributionToken)){
-          multiSigRevenue = assetBalance.mul(TOTAL_PCT.sub(pctAllocationForRBNLockers)).div(TOTAL_PCT);
-        }else{
+        if(address(asset) != address(distributionToken)){
           // Calculate RBN allocation amount to swap for distributionToken
-          uint256 amountIn = assetBalance.mul(pctAllocationForRBNLockers).div(TOTAL_PCT);
+          uint256 amountIn = assetBalance.sub(multiSigRevenue);
           _swap(asset, amountIn);
-
-          // Multisig revenue is whatever is left of asset balance
-          multiSigRevenue = assetBalance.sub(amountIn);
         }
 
         // Transfer multisig allocation of protocol revenue to multisig
