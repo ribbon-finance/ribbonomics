@@ -33,10 +33,7 @@ contract FeeCustody {
     uint256 public constant TOTAL_PCT = 10000; // Equals 100%
     ISwapRouter public constant UNIV3_SWAP_ROUTER = ISwapRouter(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45);
 
-    // -1 = Removed
-    // 0 = Not Added
-    // -1 = Added
-    mapping(address => int8) public assetStatus;
+    mapping(address => bool) public assetExists;
 
     // Intermediary path asset for univ3 swaps.
     // Empty if direct pool swap between asset and distribution asset
@@ -58,7 +55,6 @@ contract FeeCustody {
     uint256 public lastAssetIdx;
 
     // Events
-    event RemoveAsset(address asset);
     event NewAsset(address asset, address[] intermediaryPath, address[] poolFees);
     event RecoveredAsset(address asset);
     event NewFeeDistributor(address feeDistributor);
@@ -111,14 +107,12 @@ contract FeeCustody {
      */
     function distributeProtocolRevenue() external onlyAdmin returns (uint256 toDistribute) {
       for(uint i; i < lastAssetIdx; i++){
-        // If we removed asset as part of
-        // protocol revenue distribution, skip
-        if(assetStatus[assets[i]] == -1){
-          continue;
-        }
-
         IERC20 asset = IERC20(assets[i]);
         uint256 assetBalance = asset.balanceOf(address(this));
+
+        if(!assetBalance){
+          continue;
+        }
 
         uint256 multiSigRevenue = assetBalance.mul(TOTAL_PCT.sub(pctAllocationForRBNLockers)).div(TOTAL_PCT);
 
@@ -189,12 +183,6 @@ contract FeeCustody {
      */
     function _getSwapQuote(uint256 _allocPCT) internal view returns (uint256 claimable) {
       for(uint i; i < lastAssetIdx; i++){
-        // If we removed asset as part of
-        // protocol revenue distribution, skip
-        if(assetStatus[assets[i]] == -1){
-          continue;
-        }
-
         IChainlink oracle = IChainlink(oracles[assets[i]]);
 
         // Approximate claimable by multiplying
@@ -263,23 +251,21 @@ contract FeeCustody {
      */
     function setAsset(address _asset, address _oracle, address[] calldata _intermediaryPath, address[] calldata _poolFees, bool _isUpdate) external onlyAdmin {
         require(_asset != address(0), "!address(0)");
-        // We must be setting new valid oracle, or want to keep as is if one exists
-        require((oracles[_asset] != address(0) && _oracle == address(0)) || IChainlink(oracles[_asset]).decimals() == 8, "!ASSET/USD");
-
         uint8 _pathLen = _intermediaryPath.length;
         uint8 _swapFeeLen = _poolFees.length;
-        uint8 _assetStatus = assetStatus[_asset];
+        uint8 _assetExists = assetExists[_asset];
 
+        // We must be setting new valid oracle, or want to keep as is if one exists
+        require((_assetExists != address(0) && _oracle == address(0)) || IChainlink(oracles[_asset]).decimals() == 8, "!ASSET/USD");
         require(_pathLen < 2, "invalid intermediary path");
-        require(((_assetStatus == 0 && _swapFeeLen > 0) || _assetStatus > 0) &&  _swapFeeLen < 2, "invalid pool fees array length");
+        require(((!_assetExists && _swapFeeLen > 0) || _assetExists) &&  _swapFeeLen < 2, "invalid pool fees array length");
 
         // If not set asset
-        if(_assetStatus == 0){
+        if(!_assetExists){
           assets[lastAssetIdx] = _asset;
           lastAssetIdx += 1;
+          assetExists[_asset] = true;
         }
-
-        assetStatus[_asset] = 1;
 
         // If we want to update
         if(_isUpdate){
@@ -289,20 +275,6 @@ contract FeeCustody {
         }
 
         emit NewAsset(_asset, _intermediaryPath, _poolFees);
-    }
-
-    /**
-     * @notice
-     * remove asset
-     * @dev Can be called by admin
-     * @param _asset asset to remove
-     */
-    function removeAsset(address _asset) external onlyAdmin {
-        require(_asset != address(0), "!address(0)");
-        if(assetStatus[_asset] > 0){
-          assetStatus[_asset] = -1;
-          emit RemoveAsset(_asset);
-        }
     }
 
     /**
