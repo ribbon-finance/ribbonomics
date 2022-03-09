@@ -72,7 +72,6 @@ contract FeeCustody is Ownable {
         address _protocolRevenueRecipient,
         address _admin
     ) {
-        require(_pctAllocationForRBNLockers != 0, "!0");
         require(_distributionToken != address(0), "!address(0)");
         require(_feeDistributor != address(0), "!address(0)");
         require(_protocolRevenueRecipient != address(0), "!address(0)");
@@ -370,7 +369,6 @@ contract FeeCustody is Ownable {
     function setRBNLockerAllocPCT(uint256 _pctAllocationForRBNLockers)
         external
     {
-        require(_pctAllocationForRBNLockers != 0, "!0");
         pctAllocationForRBNLockers = _pctAllocationForRBNLockers;
         emit NewRBNLockerAllocation(_pctAllocationForRBNLockers);
     }
