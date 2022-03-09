@@ -202,7 +202,7 @@ contract FeeCustody is Ownable{
               path: intermediaryPath[_asset],
               recipient: msg.sender,
               deadline: _deadline,
-              amountIn: amountIn,
+              amountIn: _amountIn,
               amountOutMinimum: _minAmountOut
           });
 
