@@ -37,25 +37,18 @@ contract FeeCustody is Ownable{
 
     // Intermediary path asset for univ3 swaps.
     // Empty if direct pool swap between asset and distribution asset
-    // ex: for ETH -> USDC _intermediaryPath = [] (ETH -> USDC)
-    // ex: for AAVE -> USDC _intermediaryPath = [ETH] (AAVE -> ETH -> USDC)
-    mapping(address => address[]) public intermediaryPath;
+    mapping(address => bytes) public intermediaryPath;
 
     // Oracle between asset/usd pair for total
     // reward approximation across all assets earned
     mapping(address => address) public oracles;
-
-    // Pool fees for Univ3 swap
-    // Length 1 if direct swap between asset and distribution asset
-    // Length 2 if swap with intermediary asset
-    mapping(address => uint24[]) public poolFees;
 
     address[100] assets;
     // Index of empty slot in assets array
     uint256 public lastAssetIdx;
 
     // Events
-    event NewAsset(address asset, address[] intermediaryPath, address[] poolFees);
+    event NewAsset(address asset, bytes intermediaryPath);
     event RecoveredAsset(address asset);
     event NewFeeDistributor(address feeDistributor);
     event NewRBNLockerAllocation(uint256 pctAllocationForRBNLockers);
@@ -97,9 +90,11 @@ contract FeeCustody is Ownable{
      * Swaps RBN locker allocation of protocol revenu to distributionToken,
      * sends the rest to the multisig
      * @dev Can be called by admin
+     * @param _minAmountOut min amount out for every asset type swap
+     * @param _deadline deadline for transaction expiry
      * @return amount of distributionToken distributed to fee distributor
      */
-    function distributeProtocolRevenue() external onlyOwner returns (uint256 toDistribute) {
+    function distributeProtocolRevenue(uint256[] calldata _minAmountOut, uint256 _deadline) external onlyOwner returns (uint256 toDistribute) {
       for(uint i; i < lastAssetIdx; i++){
         IERC20 asset = IERC20(assets[i]);
         uint256 assetBalance = asset.balanceOf(address(this));
@@ -115,7 +110,7 @@ contract FeeCustody is Ownable{
         if(address(asset) != address(distributionToken)){
           // Calculate RBN allocation amount to swap for distributionToken
           uint256 amountIn = assetBalance.sub(multiSigRevenue);
-          _swap(asset, amountIn);
+          _swap(asset, amountIn, _minAmountOut[i], _deadline);
         }
 
         // Transfer multisig allocation of protocol revenue to multisig
@@ -194,32 +189,23 @@ contract FeeCustody is Ownable{
      * Swaps _amountIn of _asset into distributionToken
      * @param _asset asset to swap from
      * @param _amountIn amount to swap of asset
+     * @param _minAmountOut min amount out for every asset type swap
+     * @param _deadline deadline for transaction expiry
      */
-    function _swap(address _asset, uint256 _amountIn) internal {
+    function _swap(address _asset, uint256 _amountIn, uint256 _minAmountOut, uint256 _deadline) internal {
       TransferHelper.safeApprove(asset, address(UNIV3_SWAP_ROUTER), _amountIn);
-
-      address[] memory _intermediaryPath = intermediaryPath[_asset];
-      address[] memory _poolFees = poolFees[_asset];
 
       // Multiple pool swaps are encoded through bytes called a `path`.
       // A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
       // The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut)
       // where tokenIn/tokenOut parameter is the shared token across the pools.
-
-      bytes pathEncoding;
-      if(_intermediaryPath.length > 0){
-        pathEncoding = abi.encodePacked(_asset, _poolFees[0], _intermediaryPath[0], _poolFees[1], address(distributionToken));
-      }else{
-        pathEncoding = abi.encodePacked(_asset, _poolFees[0], address(distributionToken));
-      }
-
       ISwapRouter.ExactInputParams memory params =
           ISwapRouter.ExactInputParams({
-              path: pathEncoding,
+              path: intermediaryPath[_asset],
               recipient: msg.sender,
-              deadline: block.timestamp,
+              deadline: _deadline,
               amountIn: amountIn,
-              amountOutMinimum: 0
+              amountOutMinimum: _minAmountOut
           });
 
       // Executes the swap.
@@ -234,7 +220,6 @@ contract FeeCustody is Ownable{
      * @param _oracle ASSET/USD ORACLE.
      * @param _intermediaryPath path for univ3 swap.
      * @param _poolFee fees for asset / distributionToken.
-     * @param _isUpdate if we are updating existing asset / setting asset
 
      * If intermediary path then pool fee between both pairs
      * (ex: AAVE / ETH , ETH / USDC)
@@ -243,16 +228,16 @@ contract FeeCustody is Ownable{
      * NOTE: MUST BE ASSET / USD ORACLE
      * NOTE: 3000 = 0.3% fee for pool fees
      */
-    function setAsset(address _asset, address _oracle, address[] calldata _intermediaryPath, address[] calldata _poolFees, bool _isUpdate) external onlyOwner {
+    function setAsset(address _asset, address _oracle, address[] calldata _intermediaryPath, address[] calldata _poolFees) external onlyOwner {
         require(_asset != address(0), "!address(0)");
         uint8 _pathLen = _intermediaryPath.length;
         uint8 _swapFeeLen = _poolFees.length;
         uint8 _assetExists = assetExists[_asset];
 
         // We must be setting new valid oracle, or want to keep as is if one exists
-        require((_assetExists != address(0) && _oracle == address(0)) || IChainlink(oracles[_asset]).decimals() == 8, "!ASSET/USD");
+        require(IChainlink(oracles[_asset]).decimals() == 8, "!ASSET/USD");
         require(_pathLen < 2, "invalid intermediary path");
-        require(((!_assetExists && _swapFeeLen > 0) || _assetExists) &&  _swapFeeLen < 2, "invalid pool fees array length");
+        require(_swapFeeLen > 0 && _swapFeeLen < 2, "invalid pool fees array length");
 
         // If not set asset
         if(!_assetExists){
@@ -261,14 +246,15 @@ contract FeeCustody is Ownable{
           assetExists[_asset] = true;
         }
 
-        // If we want to update
-        if(_isUpdate){
-          oracles[_asset] = _oracle;
-          intermediaryPath[_asset] = _intermediaryPath;
-          poolFees[_asset] = _poolFees;
+        oracles[_asset] = _oracle;
+
+        if(_pathLen > 0){
+          intermediaryPath[_asset] = abi.encodePacked(_asset, _poolFees[0], _intermediaryPath[0], _poolFees[1], address(distributionToken));
+        }else{
+          intermediaryPath[_asset] = abi.encodePacked(_asset, _poolFees[0], address(distributionToken));
         }
 
-        emit NewAsset(_asset, _intermediaryPath, _poolFees);
+        emit NewAsset(_asset, intermediaryPath[_asset]);
     }
 
     /**
