@@ -242,7 +242,7 @@ contract FeeCustody is Ownable{
         // If not set asset
         if(!_assetExists){
           assets[lastAssetIdx] = _asset;
-          lastAssetIdx += 1;
+          ++lastAssetIdx;
           assetExists[_asset] = true;
         }
 
