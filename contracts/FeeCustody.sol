@@ -105,7 +105,7 @@ contract FeeCustody is Ownable {
             IERC20 asset = IERC20(assets[i]);
             uint256 assetBalance = asset.balanceOf(address(this));
 
-            if (!assetBalance) {
+            if (assetBalance == 0) {
                 continue;
             }
 
