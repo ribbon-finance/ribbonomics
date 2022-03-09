@@ -3,6 +3,7 @@ pragma solidity 0.8.11;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/IFeeDistributor.sol";
 import "./interfaces/IChainlink.sol";
@@ -14,7 +15,7 @@ import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
     @notice Custody Contract for Ribbon Vault Management / Performance Fees
  */
 
-contract FeeCustody {
+contract FeeCustody is Ownable{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -24,8 +25,7 @@ contract FeeCustody {
     address public protocolRevenueRecipient;
     // Address of fee distributor contract for RBN lockers to claim
     IFeeDistributor public feeDistributor;
-    // Admin
-    address public admin;
+
     // % allocation (0 - 100%) from protocol revenue to allocate to RBN lockers.
     // 2 decimals. ex: 10% = 1000
     uint256 public pctAllocationForRBNLockers;
@@ -61,7 +61,6 @@ contract FeeCustody {
     event NewRBNLockerAllocation(uint256 pctAllocationForRBNLockers);
     event NewDistributionToken(address distributionToken);
     event NewProtocolRevenueRecipient(address protocolRevenueRecipient);
-    event NewAdmin(address admin);
 
     /**
      * @notice
@@ -89,13 +88,8 @@ contract FeeCustody {
         distributionToken = IERC20(_distributionToken);
         feeDistributor = IFeeDistributor(_feeDistributor);
         protocolRevenueRecipient = _protocolRevenueRecipient;
-        admin = _admin;
-    }
 
-    // Modifier for only admin methods
-    modifier onlyAdmin {
-          require(msg.sender == admin);
-          _;
+        _transferOwnership(_admin);
     }
 
     /**
@@ -105,7 +99,7 @@ contract FeeCustody {
      * @dev Can be called by admin
      * @return amount of distributionToken distributed to fee distributor
      */
-    function distributeProtocolRevenue() external onlyAdmin returns (uint256 toDistribute) {
+    function distributeProtocolRevenue() external onlyOwner returns (uint256 toDistribute) {
       for(uint i; i < lastAssetIdx; i++){
         IERC20 asset = IERC20(assets[i]);
         uint256 assetBalance = asset.balanceOf(address(this));
@@ -249,7 +243,7 @@ contract FeeCustody {
      * NOTE: MUST BE ASSET / USD ORACLE
      * NOTE: 3000 = 0.3% fee for pool fees
      */
-    function setAsset(address _asset, address _oracle, address[] calldata _intermediaryPath, address[] calldata _poolFees, bool _isUpdate) external onlyAdmin {
+    function setAsset(address _asset, address _oracle, address[] calldata _intermediaryPath, address[] calldata _poolFees, bool _isUpdate) external onlyOwner {
         require(_asset != address(0), "!address(0)");
         uint8 _pathLen = _intermediaryPath.length;
         uint8 _swapFeeLen = _poolFees.length;
@@ -282,7 +276,7 @@ contract FeeCustody {
      * recover all assets
      * @dev Can be called by admin
      */
-    function recoverAllAssets() external onlyAdmin {
+    function recoverAllAssets() external onlyOwner {
         // For all added assets, if not removed, send to protocol revenue recipient
         for(uint i = 0; i < lastAssetIdx; i++){
           _recoverAsset(assets[i]);
@@ -295,7 +289,7 @@ contract FeeCustody {
      * @dev Can be called by admin
      * @param _asset asset to recover
      */
-    function recoverAsset(address _asset) external onlyAdmin {
+    function recoverAsset(address _asset) external onlyOwner {
       require(_asset != address(0), "!address(0)");
       _recoverAsset(_asset);
     }
@@ -320,7 +314,7 @@ contract FeeCustody {
      * @dev Can be called by admin
      * @param _feeDistributor new fee distributor
      */
-    function setFeeDistributor(address _feeDistributor) external onlyAdmin {
+    function setFeeDistributor(address _feeDistributor) external onlyOwner {
         require(_feeDistributor != address(0), "!address(0)");
         feeDistributor = IFeeDistributor(_feeDistributor);
         emit NewFeeDistributor(_feeDistributor);
@@ -344,7 +338,7 @@ contract FeeCustody {
      * @dev Can be called by admin
      * @param _distributionToken new distribution token
      */
-    function setDistributionToken(address _distributionToken) external onlyAdmin {
+    function setDistributionToken(address _distributionToken) external onlyOwner {
         require(_distributionToken != address(0), "!address(0)");
         distributionToken = IERC20(_distributionToken);
         emit NewDistributionToken(_distributionToken);
@@ -356,22 +350,9 @@ contract FeeCustody {
      * @dev Can be called by admin
      * @param _protocolRevenueRecipient new protocol revenue recipient
      */
-    function setProtocolRevenueRecipient(address _protocolRevenueRecipient) external onlyAdmin {
+    function setProtocolRevenueRecipient(address _protocolRevenueRecipient) external onlyOwner {
         require(_protocolRevenueRecipient != address(0), "!address(0)");
         protocolRevenueRecipient = _protocolRevenueRecipient;
         emit NewProtocolRevenueRecipient(_protocolRevenueRecipient);
-    }
-
-
-    /**
-     * @notice
-     * set admin
-     * @dev Can be called by admin
-     * @param _admin new admin
-     */
-    function setAdmin(address _admin) external onlyAdmin {
-        require(_admin != address(0), "!address(0)");
-        admin = _admin;
-        emit NewAdmin(_admin);
     }
 }
