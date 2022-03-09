@@ -8,14 +8,14 @@ import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/IFeeDistributor.sol";
 import "./interfaces/IChainlink.sol";
 
-import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
-import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
 /** @title FeeCustody
     @notice Custody Contract for Ribbon Vault Management / Performance Fees
  */
 
-contract FeeCustody is Ownable{
+contract FeeCustody is Ownable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -31,7 +31,8 @@ contract FeeCustody is Ownable{
     uint256 public pctAllocationForRBNLockers;
 
     uint256 public constant TOTAL_PCT = 10000; // Equals 100%
-    ISwapRouter public constant UNIV3_SWAP_ROUTER = ISwapRouter(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45);
+    ISwapRouter public constant UNIV3_SWAP_ROUTER =
+        ISwapRouter(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45);
 
     mapping(address => bool) public assetExists;
 
@@ -96,34 +97,39 @@ contract FeeCustody is Ownable{
      * @param _deadline deadline for transaction expiry
      * @return amount of distributionToken distributed to fee distributor
      */
-    function distributeProtocolRevenue(uint256[] calldata _minAmountOut, uint256 _deadline) external onlyOwner returns (uint256 toDistribute) {
-      for(uint i; i < lastAssetIdx; i++){
-        IERC20 asset = IERC20(assets[i]);
-        uint256 assetBalance = asset.balanceOf(address(this));
+    function distributeProtocolRevenue(
+        uint256[] calldata _minAmountOut,
+        uint256 _deadline
+    ) external onlyOwner returns (uint256 toDistribute) {
+        for (uint256 i; i < lastAssetIdx; i++) {
+            IERC20 asset = IERC20(assets[i]);
+            uint256 assetBalance = asset.balanceOf(address(this));
 
-        if(!assetBalance){
-          continue;
+            if (!assetBalance) {
+                continue;
+            }
+
+            uint256 multiSigRevenue = assetBalance
+                .mul(TOTAL_PCT.sub(pctAllocationForRBNLockers))
+                .div(TOTAL_PCT);
+
+            // If we are holding the distributionToken itself,
+            // do not swap
+            if (address(asset) != address(distributionToken)) {
+                // Calculate RBN allocation amount to swap for distributionToken
+                uint256 amountIn = assetBalance.sub(multiSigRevenue);
+                _swap(asset, amountIn, _minAmountOut[i], _deadline);
+            }
+
+            // Transfer multisig allocation of protocol revenue to multisig
+            asset.transfer(protocolRevenueRecipient, multiSigRevenue);
         }
 
-        uint256 multiSigRevenue = assetBalance.mul(TOTAL_PCT.sub(pctAllocationForRBNLockers)).div(TOTAL_PCT);
+        toDistribute += distributionToken.balanceOf(address(this));
+        distributionToken.safeApprove(address(feeDistributor), toDistribute);
 
-        // If we are holding the distributionToken itself,
-        // do not swap
-        if(address(asset) != address(distributionToken)){
-          // Calculate RBN allocation amount to swap for distributionToken
-          uint256 amountIn = assetBalance.sub(multiSigRevenue);
-          _swap(asset, amountIn, _minAmountOut[i], _deadline);
-        }
-
-        // Transfer multisig allocation of protocol revenue to multisig
-        asset.transfer(protocolRevenueRecipient, multiSigRevenue);
-      }
-
-      toDistribute += distributionToken.balanceOf(address(this));
-      distributionToken.safeApprove(address(feeDistributor), toDistribute);
-
-      // Tranfer RBN locker allocation of protocol revenue to fee distributor
-      feeDistributor.burn(address(distributionToken), toDistribute);
+        // Tranfer RBN locker allocation of protocol revenue to fee distributor
+        feeDistributor.burn(address(distributionToken), toDistribute);
     }
 
     /**
@@ -131,9 +137,16 @@ contract FeeCustody is Ownable{
      * Amount of _asset allocated to RBN lockers from current balance
      * @return amount allocated to RBN lockers
      */
-    function claimableByRBNLockersOfAsset(address _asset) external view returns (uint256) {
-      uint256 allocPCT = pctAllocationForRBNLockers;
-      return IERC20(_asset).balanceOf(address(this)).mul(allocPCT).div(TOTAL_PCT);
+    function claimableByRBNLockersOfAsset(address _asset)
+        external
+        view
+        returns (uint256)
+    {
+        uint256 allocPCT = pctAllocationForRBNLockers;
+        return
+            IERC20(_asset).balanceOf(address(this)).mul(allocPCT).div(
+                TOTAL_PCT
+            );
     }
 
     /**
@@ -141,9 +154,16 @@ contract FeeCustody is Ownable{
      * Amount of _asset allocated to multisig from current balance
      * @return amount allocated to multisig
      */
-    function claimableByProtocolOfAsset(address _asset) external view returns (uint256) {
-      uint256 allocPCT = TOTAL_PCT.sub(pctAllocationForRBNLockers);
-      return IERC20(_asset).balanceOf(address(this)).mul(allocPCT).div(TOTAL_PCT);
+    function claimableByProtocolOfAsset(address _asset)
+        external
+        view
+        returns (uint256)
+    {
+        uint256 allocPCT = TOTAL_PCT.sub(pctAllocationForRBNLockers);
+        return
+            IERC20(_asset).balanceOf(address(this)).mul(allocPCT).div(
+                TOTAL_PCT
+            );
     }
 
     /**
@@ -152,8 +172,8 @@ contract FeeCustody is Ownable{
      * @return total allocated (in USD)
      */
     function totalClaimableByRBNLockersInUSD() external view returns (uint256) {
-      uint256 allocPCT = pctAllocationForRBNLockers;
-      return _getSwapQuote(allocPCT);
+        uint256 allocPCT = pctAllocationForRBNLockers;
+        return _getSwapQuote(allocPCT);
     }
 
     /**
@@ -162,8 +182,8 @@ contract FeeCustody is Ownable{
      * @return total allocated (in USD)
      */
     function totalClaimableByProtocolInUSD() external view returns (uint256) {
-      uint256 allocPCT = TOTAL_PCT.sub(pctAllocationForRBNLockers);
-      return _getSwapQuote(allocPCT);
+        uint256 allocPCT = TOTAL_PCT.sub(pctAllocationForRBNLockers);
+        return _getSwapQuote(allocPCT);
     }
 
     /**
@@ -172,18 +192,23 @@ contract FeeCustody is Ownable{
      * @param _allocPCT allocation percentage
      * @return total claimable (in USD)
      */
-    function _getSwapQuote(uint256 _allocPCT) internal view returns (uint256 claimable) {
-      for(uint i; i < lastAssetIdx; i++){
-        IChainlink oracle = IChainlink(oracles[assets[i]]);
+    function _getSwapQuote(uint256 _allocPCT)
+        internal
+        view
+        returns (uint256 claimable)
+    {
+        for (uint256 i; i < lastAssetIdx; i++) {
+            IChainlink oracle = IChainlink(oracles[assets[i]]);
 
-        // Approximate claimable by multiplying
-        // current asset balance with current asset price in USD
-        claimable += IERC20(assets[i]).balanceOf(address(this))
-          .mul(oracle.latestAnswer())
-          .mul(_allocPCT)
-          .div(oracle.decimals())
-          .div(TOTAL_PCT);
-      }
+            // Approximate claimable by multiplying
+            // current asset balance with current asset price in USD
+            claimable += IERC20(assets[i])
+                .balanceOf(address(this))
+                .mul(oracle.latestAnswer())
+                .mul(_allocPCT)
+                .div(oracle.decimals())
+                .div(TOTAL_PCT);
+        }
     }
 
     /**
@@ -194,20 +219,29 @@ contract FeeCustody is Ownable{
      * @param _minAmountOut min amount out for every asset type swap
      * @param _deadline deadline for transaction expiry
      */
-    function _swap(address _asset, uint256 _amountIn, uint256 _minAmountOut, uint256 _deadline) internal {
-      TransferHelper.safeApprove(asset, address(UNIV3_SWAP_ROUTER), _amountIn);
+    function _swap(
+        address _asset,
+        uint256 _amountIn,
+        uint256 _minAmountOut,
+        uint256 _deadline
+    ) internal {
+        TransferHelper.safeApprove(
+            asset,
+            address(UNIV3_SWAP_ROUTER),
+            _amountIn
+        );
 
-      ISwapRouter.ExactInputParams memory params =
-          ISwapRouter.ExactInputParams({
-              path: intermediaryPath[_asset],
-              recipient: msg.sender,
-              deadline: _deadline,
-              amountIn: _amountIn,
-              amountOutMinimum: _minAmountOut
-          });
+        ISwapRouter.ExactInputParams memory params = ISwapRouter
+            .ExactInputParams({
+                path: intermediaryPath[_asset],
+                recipient: msg.sender,
+                deadline: _deadline,
+                amountIn: _amountIn,
+                amountOutMinimum: _minAmountOut
+            });
 
-      // Executes the swap.
-      UNIV3_SWAP_ROUTER.exactInput(params);
+        // Executes the swap.
+        UNIV3_SWAP_ROUTER.exactInput(params);
     }
 
     /**
@@ -226,7 +260,12 @@ contract FeeCustody is Ownable{
      * NOTE: MUST BE ASSET / USD ORACLE
      * NOTE: 3000 = 0.3% fee for pool fees
      */
-    function setAsset(address _asset, address _oracle, address[] calldata _intermediaryPath, address[] calldata _poolFees) external onlyOwner {
+    function setAsset(
+        address _asset,
+        address _oracle,
+        address[] calldata _intermediaryPath,
+        address[] calldata _poolFees
+    ) external onlyOwner {
         require(_asset != address(0), "!address(0)");
         uint8 _pathLen = _intermediaryPath.length;
         uint8 _swapFeeLen = _poolFees.length;
@@ -235,13 +274,16 @@ contract FeeCustody is Ownable{
         // We must be setting new valid oracle, or want to keep as is if one exists
         require(IChainlink(oracles[_asset]).decimals() == 8, "!ASSET/USD");
         require(_pathLen < 2, "invalid intermediary path");
-        require(_swapFeeLen > 0 && _swapFeeLen < 2, "invalid pool fees array length");
+        require(
+            _swapFeeLen > 0 && _swapFeeLen < 2,
+            "invalid pool fees array length"
+        );
 
         // If not set asset
-        if(!_assetExists){
-          assets[lastAssetIdx] = _asset;
-          ++lastAssetIdx;
-          assetExists[_asset] = true;
+        if (!_assetExists) {
+            assets[lastAssetIdx] = _asset;
+            ++lastAssetIdx;
+            assetExists[_asset] = true;
         }
 
         // Set oracle for asset
@@ -251,10 +293,20 @@ contract FeeCustody is Ownable{
         // A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
         // The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut)
         // where tokenIn/tokenOut parameter is the shared token across the pools.
-        if(_pathLen > 0){
-          intermediaryPath[_asset] = abi.encodePacked(_asset, _poolFees[0], _intermediaryPath[0], _poolFees[1], address(distributionToken));
-        }else{
-          intermediaryPath[_asset] = abi.encodePacked(_asset, _poolFees[0], address(distributionToken));
+        if (_pathLen > 0) {
+            intermediaryPath[_asset] = abi.encodePacked(
+                _asset,
+                _poolFees[0],
+                _intermediaryPath[0],
+                _poolFees[1],
+                address(distributionToken)
+            );
+        } else {
+            intermediaryPath[_asset] = abi.encodePacked(
+                _asset,
+                _poolFees[0],
+                address(distributionToken)
+            );
         }
 
         emit NewAsset(_asset, intermediaryPath[_asset]);
@@ -267,8 +319,8 @@ contract FeeCustody is Ownable{
      */
     function recoverAllAssets() external onlyOwner {
         // For all added assets, if not removed, send to protocol revenue recipient
-        for(uint i = 0; i < lastAssetIdx; i++){
-          _recoverAsset(assets[i]);
+        for (uint256 i = 0; i < lastAssetIdx; i++) {
+            _recoverAsset(assets[i]);
         }
     }
 
@@ -279,8 +331,8 @@ contract FeeCustody is Ownable{
      * @param _asset asset to recover
      */
     function recoverAsset(address _asset) external onlyOwner {
-      require(_asset != address(0), "!address(0)");
-      _recoverAsset(_asset);
+        require(_asset != address(0), "!address(0)");
+        _recoverAsset(_asset);
     }
 
     /**
@@ -289,12 +341,12 @@ contract FeeCustody is Ownable{
      * @param _asset asset to recover
      */
     function _recoverAsset(address _asset) internal {
-      IERC20 asset = IERC20(_asset);
-      uint256 bal = asset.balanceOf(address(this));
-      if(bal > 0){
-        asset.transfer(protocolRevenueRecipient, bal);
-        emit RecoveredAsset(_asset);
-      }
+        IERC20 asset = IERC20(_asset);
+        uint256 bal = asset.balanceOf(address(this));
+        if (bal > 0) {
+            asset.transfer(protocolRevenueRecipient, bal);
+            emit RecoveredAsset(_asset);
+        }
     }
 
     /**
@@ -315,7 +367,9 @@ contract FeeCustody is Ownable{
      * @dev Can be called by admin
      * @param _pctAllocationForRBNLockers new allocation for rbn lockers
      */
-    function setRBNLockerAllocPCT(uint256 _pctAllocationForRBNLockers) external {
+    function setRBNLockerAllocPCT(uint256 _pctAllocationForRBNLockers)
+        external
+    {
         require(_pctAllocationForRBNLockers != 0, "!0");
         pctAllocationForRBNLockers = _pctAllocationForRBNLockers;
         emit NewRBNLockerAllocation(_pctAllocationForRBNLockers);
@@ -327,7 +381,10 @@ contract FeeCustody is Ownable{
      * @dev Can be called by admin
      * @param _distributionToken new distribution token
      */
-    function setDistributionToken(address _distributionToken) external onlyOwner {
+    function setDistributionToken(address _distributionToken)
+        external
+        onlyOwner
+    {
         require(_distributionToken != address(0), "!address(0)");
         distributionToken = IERC20(_distributionToken);
         emit NewDistributionToken(_distributionToken);
@@ -339,7 +396,10 @@ contract FeeCustody is Ownable{
      * @dev Can be called by admin
      * @param _protocolRevenueRecipient new protocol revenue recipient
      */
-    function setProtocolRevenueRecipient(address _protocolRevenueRecipient) external onlyOwner {
+    function setProtocolRevenueRecipient(address _protocolRevenueRecipient)
+        external
+        onlyOwner
+    {
         require(_protocolRevenueRecipient != address(0), "!address(0)");
         protocolRevenueRecipient = _protocolRevenueRecipient;
         emit NewProtocolRevenueRecipient(_protocolRevenueRecipient);
