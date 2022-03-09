@@ -43,7 +43,7 @@ contract FeeCustody is Ownable{
     // reward approximation across all assets earned
     mapping(address => address) public oracles;
 
-    address[100] assets;
+    address[1000] assets;
     // Index of empty slot in assets array
     uint256 public lastAssetIdx;
 
