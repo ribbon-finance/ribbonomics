@@ -90,7 +90,9 @@ contract FeeCustody is Ownable{
      * Swaps RBN locker allocation of protocol revenu to distributionToken,
      * sends the rest to the multisig
      * @dev Can be called by admin
-     * @param _minAmountOut min amount out for every asset type swap
+     * @param _minAmountOut min amount out for every asset type swap.
+     * will need to be in order of assets in assets[] array. should be
+     * fine if we keep track.
      * @param _deadline deadline for transaction expiry
      * @return amount of distributionToken distributed to fee distributor
      */
@@ -195,10 +197,6 @@ contract FeeCustody is Ownable{
     function _swap(address _asset, uint256 _amountIn, uint256 _minAmountOut, uint256 _deadline) internal {
       TransferHelper.safeApprove(asset, address(UNIV3_SWAP_ROUTER), _amountIn);
 
-      // Multiple pool swaps are encoded through bytes called a `path`.
-      // A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
-      // The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut)
-      // where tokenIn/tokenOut parameter is the shared token across the pools.
       ISwapRouter.ExactInputParams memory params =
           ISwapRouter.ExactInputParams({
               path: intermediaryPath[_asset],
@@ -246,8 +244,13 @@ contract FeeCustody is Ownable{
           assetExists[_asset] = true;
         }
 
+        // Set oracle for asset
         oracles[_asset] = _oracle;
 
+        // Multiple pool swaps are encoded through bytes called a `path`.
+        // A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
+        // The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut)
+        // where tokenIn/tokenOut parameter is the shared token across the pools.
         if(_pathLen > 0){
           intermediaryPath[_asset] = abi.encodePacked(_asset, _poolFees[0], _intermediaryPath[0], _poolFees[1], address(distributionToken));
         }else{
