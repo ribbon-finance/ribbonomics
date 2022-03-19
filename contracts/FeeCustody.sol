@@ -34,8 +34,6 @@ contract FeeCustody is Ownable {
     ISwapRouter public constant UNIV3_SWAP_ROUTER =
         ISwapRouter(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45);
 
-    mapping(address => bool) public assetExists;
-
     // Intermediary path asset for univ3 swaps.
     // Empty if direct pool swap between asset and distribution asset
     mapping(address => bytes) public intermediaryPath;
@@ -255,7 +253,6 @@ contract FeeCustody is Ownable {
      * If intermediary path then pool fee between both pairs
      * (ex: AAVE / ETH , ETH / USDC)
      * NOTE: if intermediaryPath empty then single hop swap
-     * OR remain unchanged if asset had already been added.
      * NOTE: MUST BE ASSET / USD ORACLE
      * NOTE: 3000 = 0.3% fee for pool fees
      */
@@ -268,7 +265,6 @@ contract FeeCustody is Ownable {
         require(_asset != address(0), "!_asset");
         uint8 _pathLen = _intermediaryPath.length;
         uint8 _swapFeeLen = _poolFees.length;
-        uint8 _assetExists = assetExists[_asset];
 
         // We must be setting new valid oracle, or want to keep as is if one exists
         require(IChainlink(oracles[_asset]).decimals() == 8, "!ASSET/USD");
@@ -279,10 +275,9 @@ contract FeeCustody is Ownable {
         );
 
         // If not set asset
-        if (!_assetExists) {
+        if (intermediaryPath[_asset] == "") {
             assets[lastAssetIdx] = _asset;
             ++lastAssetIdx;
-            assetExists[_asset] = true;
         }
 
         // Set oracle for asset
