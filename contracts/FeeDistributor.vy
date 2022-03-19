@@ -18,6 +18,9 @@ interface VotingEscrow:
 interface VeRBNRewards:
     def getRewardFor(addr: address, lock: bool) -> bool: nonpayable
 
+interface WETH:
+    def withdraw(wad: uint256): nonpayable
+
 event CommitAdmin:
     admin: address
 
@@ -47,6 +50,7 @@ struct Point:
 
 WEEK: constant(uint256) = 7 * 86400
 TOKEN_CHECKPOINT_DEADLINE: constant(uint256) = 86400
+WETH_ADDRESS: constant(address) = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
 
 start_time: public(uint256)
 time_cursor: public(uint256)
@@ -85,7 +89,7 @@ def __init__(
     @param _voting_escrow VotingEscrow contract address
     @param _verbn_penalty_rewards VeRBN penalty rewards contract address
     @param _start_time Epoch time for fee distribution to start
-    @param _token Fee token address (3CRV)
+    @param _token Fee token address (ETH)
     @param _admin Admin address
     @param _emergency_return Address to transfer `_token` balance to
                              if this contract is killed
@@ -349,8 +353,7 @@ def claim(_addr: address = msg.sender, _claimPRewards: bool = False, _lock: bool
       log Claimed(_addr, amount, user_epoch, max_user_epoch)
 
     if amount != 0:
-        token: address = self.token
-        assert ERC20(token).transfer(_addr, amount)
+        _transfer(_addr, amount)
         self.token_last_balance -= amount
 
     if _claimPRewards:
@@ -408,7 +411,7 @@ def claim_many(_receivers: address[20]) -> bool:
           log Claimed(addr, amount, user_epoch, max_user_epoch)
 
         if amount != 0:
-            assert ERC20(token).transfer(addr, amount)
+            _transfer(addr, amount)
             total += amount
 
     if total != 0:
@@ -420,8 +423,8 @@ def claim_many(_receivers: address[20]) -> bool:
 @external
 def burn(_coin: address, _amount: uint256) -> bool:
     """
-    @notice Receive 3CRV into the contract and trigger a token checkpoint
-    @param _coin Address of the coin being received (must be 3CRV)
+    @notice Receive WETH into the contract and trigger a token checkpoint
+    @param _coin Address of the coin being received (must be WETH)
     @param _amount Amount to transfer
     @return bool success
     """
@@ -430,6 +433,11 @@ def burn(_coin: address, _amount: uint256) -> bool:
     assert not self.is_killed
 
     ERC20(_coin).transferFrom(msg.sender, self, _amount)
+    weth_to_withdraw: uint256 = ERC20(WETH).balanceOf(self)
+
+    if weth_to_withdraw > 0:
+      WETH(WETH_ADDRESS).withdraw(weth_to_withdraw)
+
     if self.can_checkpoint_token and (block.timestamp > self.last_token_time + TOKEN_CHECKPOINT_DEADLINE):
         self._checkpoint_token()
 
@@ -474,16 +482,19 @@ def toggle_allow_checkpoint_token():
 def kill_me():
     """
     @notice Kill the contract
-    @dev Killing transfers the entire 3CRV balance to the emergency return address
+    @dev Killing transfers the entire ETH balance to the emergency return address
          and blocks the ability to claim or burn. The contract cannot be unkilled.
     """
     assert msg.sender == self.admin
 
     self.is_killed = True
 
-    token: address = self.token
-    assert ERC20(token).transfer(self.emergency_return, ERC20(token).balanceOf(self))
+    amount: uint256 = ERC20(token).balanceOf(self)
 
+    if token == WETH_ADDRESS:
+      amount = self.balance
+
+    _transfer(self.emergency_return, amount)
 
 @external
 def recover_balance(_coin: address) -> bool:
@@ -510,3 +521,11 @@ def recover_balance(_coin: address) -> bool:
         assert convert(response, bool)
 
     return True
+
+@internal
+def _transfer(_to: address, _amount: uint256:
+  token: address = self.token
+  if token == WETH_ADDRESS:
+    assert send(_to, _amount)
+    return
+  assert ERC20(token).transfer(_to, _amount)
