@@ -72,10 +72,10 @@ contract FeeCustody is Ownable {
         address _protocolRevenueRecipient,
         address _admin
     ) {
-        require(_distributionToken != address(0), "!address(0)");
-        require(_feeDistributor != address(0), "!address(0)");
-        require(_protocolRevenueRecipient != address(0), "!address(0)");
-        require(_admin != address(0), "!address(0)");
+        require(_distributionToken != address(0), "!_distributionToken");
+        require(_feeDistributor != address(0), "!_feeDistributor");
+        require(_protocolRevenueRecipient != address(0), "!_protocolRevenueRecipient");
+        require(_admin != address(0), "!_admin");
 
         pctAllocationForRBNLockers = _pctAllocationForRBNLockers;
         distributionToken = IERC20(_distributionToken);
@@ -265,7 +265,7 @@ contract FeeCustody is Ownable {
         address[] calldata _intermediaryPath,
         address[] calldata _poolFees
     ) external onlyOwner {
-        require(_asset != address(0), "!address(0)");
+        require(_asset != address(0), "!_asset");
         uint8 _pathLen = _intermediaryPath.length;
         uint8 _swapFeeLen = _poolFees.length;
         uint8 _assetExists = assetExists[_asset];
@@ -330,7 +330,7 @@ contract FeeCustody is Ownable {
      * @param _asset asset to recover
      */
     function recoverAsset(address _asset) external onlyOwner {
-        require(_asset != address(0), "!address(0)");
+        require(_asset != address(0), "!asset");
         _recoverAsset(_asset);
     }
 
@@ -355,7 +355,7 @@ contract FeeCustody is Ownable {
      * @param _feeDistributor new fee distributor
      */
     function setFeeDistributor(address _feeDistributor) external onlyOwner {
-        require(_feeDistributor != address(0), "!address(0)");
+        require(_feeDistributor != address(0), "!_feeDistributor");
         feeDistributor = IFeeDistributor(_feeDistributor);
         emit NewFeeDistributor(_feeDistributor);
     }
@@ -369,6 +369,7 @@ contract FeeCustody is Ownable {
     function setRBNLockerAllocPCT(uint256 _pctAllocationForRBNLockers)
         external
     {
+        require(_pctAllocationForRBNLockers <= TOTAL_PCT, "!_pctAllocationForRBNLockers");
         pctAllocationForRBNLockers = _pctAllocationForRBNLockers;
         emit NewRBNLockerAllocation(_pctAllocationForRBNLockers);
     }
@@ -383,7 +384,7 @@ contract FeeCustody is Ownable {
         external
         onlyOwner
     {
-        require(_distributionToken != address(0), "!address(0)");
+        require(_distributionToken != address(0), "!_distributionToken");
         distributionToken = IERC20(_distributionToken);
         emit NewDistributionToken(_distributionToken);
     }
@@ -398,7 +399,7 @@ contract FeeCustody is Ownable {
         external
         onlyOwner
     {
-        require(_protocolRevenueRecipient != address(0), "!address(0)");
+        require(_protocolRevenueRecipient != address(0), "!_protocolRevenueRecipient");
         protocolRevenueRecipient = _protocolRevenueRecipient;
         emit NewProtocolRevenueRecipient(_protocolRevenueRecipient);
     }
