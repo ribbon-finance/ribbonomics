@@ -523,7 +523,7 @@ def recover_balance(_coin: address) -> bool:
     return True
 
 @internal
-def _transfer(_to: address, _amount: uint256:
+def _transfer(_to: address, _amount: uint256):
   token: address = self.token
   if token == WETH_ADDRESS:
     assert send(_to, _amount)
