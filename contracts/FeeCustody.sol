@@ -124,7 +124,7 @@ contract FeeCustody is Ownable {
             asset.transfer(protocolRevenueRecipient, multiSigRevenue);
         }
 
-        toDistribute += distributionToken.balanceOf(address(this));
+        toDistribute = distributionToken.balanceOf(address(this));
         distributionToken.safeApprove(address(feeDistributor), toDistribute);
 
         // Tranfer RBN locker allocation of protocol revenue to fee distributor
