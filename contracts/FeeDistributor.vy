@@ -489,7 +489,9 @@ def kill_me():
 
     self.is_killed = True
 
-    amount: uint256 = ERC20(self.token).balanceOf(self)
+    token: address = self.token
+
+    amount: uint256 = ERC20(token).balanceOf(self)
 
     if token == WETH_ADDRESS:
       amount = self.balance
