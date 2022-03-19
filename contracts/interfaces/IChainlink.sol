@@ -3,4 +3,5 @@ pragma solidity 0.8.11;
 
 interface IChainlink {
     function latestAnswer() external returns (int256);
+    function decimals() external returns (uint8);
 }
