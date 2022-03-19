@@ -353,7 +353,7 @@ def claim(_addr: address = msg.sender, _claimPRewards: bool = False, _lock: bool
       log Claimed(_addr, amount, user_epoch, max_user_epoch)
 
     if amount != 0:
-        _transfer(_addr, amount)
+        self._transfer(_addr, amount)
         self.token_last_balance -= amount
 
     if _claimPRewards:
@@ -411,7 +411,7 @@ def claim_many(_receivers: address[20]) -> bool:
           log Claimed(addr, amount, user_epoch, max_user_epoch)
 
         if amount != 0:
-            _transfer(addr, amount)
+            self._transfer(addr, amount)
             total += amount
 
     if total != 0:
@@ -433,7 +433,7 @@ def burn(_coin: address, _amount: uint256) -> bool:
     assert not self.is_killed
 
     ERC20(_coin).transferFrom(msg.sender, self, _amount)
-    weth_to_withdraw: uint256 = ERC20(WETH).balanceOf(self)
+    weth_to_withdraw: uint256 = ERC20(WETH_ADDRESS).balanceOf(self)
 
     if weth_to_withdraw > 0:
       WETH(WETH_ADDRESS).withdraw(weth_to_withdraw)
@@ -489,7 +489,7 @@ def kill_me():
 
     self.is_killed = True
 
-    amount: uint256 = ERC20(token).balanceOf(self)
+    amount: uint256 = ERC20(self.token).balanceOf(self)
 
     if token == WETH_ADDRESS:
       amount = self.balance
@@ -526,6 +526,6 @@ def recover_balance(_coin: address) -> bool:
 def _transfer(_to: address, _amount: uint256):
   token: address = self.token
   if token == WETH_ADDRESS:
-    assert send(_to, _amount)
+    send(_to, _amount)
     return
   assert ERC20(token).transfer(_to, _amount)
