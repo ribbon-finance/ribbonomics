@@ -496,7 +496,7 @@ def kill_me():
     if token == WETH_ADDRESS:
       amount = self.balance
 
-    _transfer(self.emergency_return, amount)
+    self._transfer(self.emergency_return, amount)
 
 @external
 def recover_balance(_coin: address) -> bool:
