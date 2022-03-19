@@ -205,7 +205,7 @@ contract FeeCustody is Ownable {
                 .balanceOf(address(this))
                 .mul(oracle.latestAnswer())
                 .mul(_allocPCT)
-                .div(oracle.decimals())
+                .div(10 ** 8)
                 .div(TOTAL_PCT);
         }
     }
