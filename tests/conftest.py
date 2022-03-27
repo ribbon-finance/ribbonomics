@@ -311,16 +311,13 @@ def coin_a():
 def coin_b():
     yield ERC20("Coin B", "USDB", 18)
 
-
 @pytest.fixture(scope="module")
-def weth():
-    yield interface.IWETH("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2")
-
+def weth(WETH9, accounts):
+    yield WETH9.deploy({"from": accounts[0]})
 
 @pytest.fixture(scope="module")
 def coin_c():
     yield ERC20("Coin C", "mWBTC", 8)
-
 
 @pytest.fixture(scope="module")
 def mock_lp_token(ERC20LP, accounts):  # Not using the actual Curve contract

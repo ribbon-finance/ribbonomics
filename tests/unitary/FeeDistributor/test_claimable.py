@@ -3,7 +3,7 @@ from brownie import ZERO_ADDRESS
 WEEK = 86400 * 7
 
 
-def test_claimable(alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
+def test_claimable(alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
     amount = 1000 * 10 ** 18
 
     for acct in (alice, bob, charlie):

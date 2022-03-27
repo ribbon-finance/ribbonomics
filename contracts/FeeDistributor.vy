@@ -50,7 +50,6 @@ struct Point:
 
 WEEK: constant(uint256) = 7 * 86400
 TOKEN_CHECKPOINT_DEADLINE: constant(uint256) = 86400
-WETH_ADDRESS: constant(address) = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
 
 start_time: public(uint256)
 time_cursor: public(uint256)
@@ -104,6 +103,10 @@ def __init__(
     self.admin = _admin
     self.emergency_return = _emergency_return
 
+@external
+@payable
+def __default__():
+  return
 
 @internal
 def _checkpoint_token():
@@ -421,6 +424,7 @@ def claim_many(_receivers: address[20]) -> bool:
 
 
 @external
+@payable
 def burn(_coin: address, _amount: uint256) -> bool:
     """
     @notice Receive WETH into the contract and trigger a token checkpoint
@@ -433,10 +437,7 @@ def burn(_coin: address, _amount: uint256) -> bool:
     assert not self.is_killed
 
     ERC20(_coin).transferFrom(msg.sender, self, _amount)
-    weth_to_withdraw: uint256 = ERC20(WETH_ADDRESS).balanceOf(self)
-
-    if weth_to_withdraw > 0:
-      WETH(WETH_ADDRESS).withdraw(weth_to_withdraw)
+    WETH(_coin).withdraw(_amount)
 
     if self.can_checkpoint_token and (block.timestamp > self.last_token_time + TOKEN_CHECKPOINT_DEADLINE):
         self._checkpoint_token()

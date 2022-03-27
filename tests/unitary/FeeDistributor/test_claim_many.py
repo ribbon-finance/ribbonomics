@@ -2,8 +2,7 @@ from brownie import ZERO_ADDRESS
 
 WEEK = 86400 * 7
 
-
-def test_claim_many(alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
+def test_claim_many(alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
     amount = 1000 * 10 ** 18
 
     for acct in (alice, bob, charlie):
@@ -33,7 +32,7 @@ def test_claim_many(alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, f
 
     assert balances == [i.balance() for i in (alice, bob, charlie)]
 
-def test_claim_many_with_burn(alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
+def test_claim_many_with_burn(alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
     amount = 1000 * 10 ** 18
 
     for acct in (alice, bob, charlie):
@@ -48,7 +47,7 @@ def test_claim_many_with_burn(alice, bob, charlie, chain, voting_escrow, ve_rbn_
 
     fee_distributor = fee_distributor(t=start_time)
     weth.deposit({"from": accounts[3], "value": 10 * 10 ** 18})
-    weth.approve(fee_distributor, 10 * 10 ** 18)
+    weth.approve(fee_distributor, 10 * 10 ** 18, {"from": accounts[3]})
     fee_distributor.burn(weth, 10 * 10 ** 18, {"from": accounts[3]})
     assert fee_distributor.balance() == 10 * 10 ** 18
 
@@ -67,9 +66,8 @@ def test_claim_many_with_burn(alice, bob, charlie, chain, voting_escrow, ve_rbn_
 
     assert balances == [i.balance() for i in (alice, bob, charlie)]
 
-
 def test_claim_many_same_account(
-    alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token
+    alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token
 ):
     amount = 1000 * 10 ** 18
 
