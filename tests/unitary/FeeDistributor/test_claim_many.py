@@ -3,7 +3,7 @@ from brownie import ZERO_ADDRESS
 WEEK = 86400 * 7
 
 
-def test_claim_many(alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
+def test_claim_many(alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
     amount = 1000 * 10 ** 18
 
     for acct in (alice, bob, charlie):
@@ -17,25 +17,25 @@ def test_claim_many(alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, f
     chain.sleep(WEEK * 5)
 
     fee_distributor = fee_distributor(t=start_time)
-    coin_a._mint_for_testing(fee_distributor, 10 ** 19)
+    accounts[3].transfer(fee_distributor, "10 ether")
     fee_distributor.checkpoint_token()
     chain.sleep(WEEK)
     fee_distributor.checkpoint_token()
 
     fee_distributor.claim_many([alice, bob, charlie] + [ZERO_ADDRESS] * 17, {"from": alice})
 
-    balances = [coin_a.balanceOf(i) for i in (alice, bob, charlie)]
+    balances = [i.balance() for i in (alice, bob, charlie)]
     chain.undo()
 
     fee_distributor.claim({"from": alice})
     fee_distributor.claim({"from": bob})
     fee_distributor.claim({"from": charlie})
 
-    assert balances == [coin_a.balanceOf(i) for i in (alice, bob, charlie)]
+    assert balances == [i.balance() for i in (alice, bob, charlie)]
 
 
 def test_claim_many_same_account(
-    alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token
+    alice, bob, charlie, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token
 ):
     amount = 1000 * 10 ** 18
 
@@ -50,13 +50,13 @@ def test_claim_many_same_account(
     chain.sleep(WEEK * 5)
 
     fee_distributor = fee_distributor(t=start_time)
-    coin_a._mint_for_testing(fee_distributor, 10 ** 19)
+    accounts[3].transfer(fee_distributor, "10 ether")
     fee_distributor.checkpoint_token()
     chain.sleep(WEEK)
     fee_distributor.checkpoint_token()
 
-    expected = fee_distributor.claim.call({"from": alice})
+    expected = fee_distributor.claim.call({"from": alice}) + alice.balance()
 
     fee_distributor.claim_many([alice] * 20, {"from": alice})
 
-    assert coin_a.balanceOf(alice) == expected
+    assert alice.balance() == expected

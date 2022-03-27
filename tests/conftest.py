@@ -312,6 +312,11 @@ def coin_b():
 
 
 @pytest.fixture(scope="module")
+def weth():
+    yield interface.IWETH("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2")
+
+
+@pytest.fixture(scope="module")
 def coin_c():
     yield ERC20("Coin C", "mWBTC", 8)
 
@@ -332,12 +337,12 @@ def pool(CurvePool, accounts, mock_lp_token, coin_a, coin_b):
 
 
 @pytest.fixture(scope="module")
-def fee_distributor(FeeDistributor, voting_escrow, ve_rbn_rewards, accounts, coin_a, chain):
+def fee_distributor(FeeDistributor, voting_escrow, ve_rbn_rewards, accounts, weth, chain):
     def f(t=None):
         if not t:
             t = chain.time()
         return FeeDistributor.deploy(
-            voting_escrow, ve_rbn_rewards, t, coin_a, accounts[0], accounts[0], {"from": accounts[0]}
+            voting_escrow, ve_rbn_rewards, t, weth, accounts[0], accounts[0], {"from": accounts[0]}
         )
 
     yield f
