@@ -10,7 +10,6 @@ from brownie import (
     YBurner,
     compile_source,
     convert,
-    interface
 )
 from brownie_tokens import ERC20
 
