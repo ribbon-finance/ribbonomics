@@ -110,7 +110,7 @@ def __default__():
 
 @internal
 def _checkpoint_token():
-    token_balance: uint256 = ERC20(self.token).balanceOf(self)
+    token_balance: uint256 = self.balance
     to_distribute: uint256 = token_balance - self.token_last_balance
     self.token_last_balance = token_balance
 
