@@ -22,7 +22,7 @@ def test_claim_many(alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_
     fee_distributor.checkpoint_token()
 
     fee_distributor.claim_many([alice, bob, charlie] + [ZERO_ADDRESS] * 17, {"from": alice})
-
+    
     balances = [i.balance() for i in (alice, bob, charlie)]
     chain.undo()
 
@@ -46,6 +46,7 @@ def test_claim_many_with_burn(alice, bob, charlie, accounts, chain, voting_escro
     chain.sleep(WEEK * 5)
 
     fee_distributor = fee_distributor(t=start_time)
+
     weth.deposit({"from": accounts[3], "value": 10 * 10 ** 18})
     weth.approve(fee_distributor, 10 * 10 ** 18, {"from": accounts[3]})
     fee_distributor.burn(weth, 10 * 10 ** 18, {"from": accounts[3]})
