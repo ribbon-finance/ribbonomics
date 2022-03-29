@@ -3,9 +3,9 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def fee_distributor(FeeDistributor, accounts, chain, voting_escrow, ve_rbn_rewards, coin_a):
+def fee_distributor(FeeDistributor, accounts, chain, voting_escrow, ve_rbn_rewards, weth):
     yield FeeDistributor.deploy(
-        voting_escrow, ve_rbn_rewards, chain.time(), coin_a, accounts[0], accounts[1], {"from": accounts[0]}
+        voting_escrow, ve_rbn_rewards, chain.time(), weth, accounts[0], accounts[1], {"from": accounts[0]}
     )
 
 
@@ -27,24 +27,28 @@ def test_multi_kill(fee_distributor, accounts):
     assert fee_distributor.is_killed()
 
 
-def test_killing_xfers_tokens(fee_distributor, accounts, coin_a):
-    coin_a._mint_for_testing(fee_distributor, 31337)
+def test_killing_xfers_tokens(fee_distributor, accounts, weth):
+    accounts[3].transfer(fee_distributor, 31337)
+
+    balanceBefore = accounts[1].balance()
 
     fee_distributor.kill_me({"from": accounts[0]})
 
     assert fee_distributor.emergency_return() == accounts[1]
-    assert coin_a.balanceOf(accounts[1]) == 31337
+    assert accounts[1].balance() - balanceBefore == 31337
 
 
-def test_multi_kill_token_xfer(fee_distributor, accounts, coin_a):
-    coin_a._mint_for_testing(fee_distributor, 10000)
+def test_multi_kill_token_xfer(fee_distributor, accounts, weth):
+    balanceBefore = accounts[1].balance()
+
+    accounts[3].transfer(fee_distributor, 10000)
     fee_distributor.kill_me({"from": accounts[0]})
 
-    coin_a._mint_for_testing(fee_distributor, 30000)
+    accounts[3].transfer(fee_distributor, 30000)
     fee_distributor.kill_me({"from": accounts[0]})
 
     assert fee_distributor.emergency_return() == accounts[1]
-    assert coin_a.balanceOf(accounts[1]) == 40000
+    assert accounts[1].balance() - balanceBefore == 40000
 
 
 @pytest.mark.parametrize("idx", range(1, 3))

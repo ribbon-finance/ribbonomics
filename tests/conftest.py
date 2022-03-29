@@ -310,11 +310,13 @@ def coin_a():
 def coin_b():
     yield ERC20("Coin B", "USDB", 18)
 
+@pytest.fixture(scope="module")
+def weth(WETH9, accounts):
+    yield WETH9.deploy({"from": accounts[0]})
 
 @pytest.fixture(scope="module")
 def coin_c():
     yield ERC20("Coin C", "mWBTC", 8)
-
 
 @pytest.fixture(scope="module")
 def mock_lp_token(ERC20LP, accounts):  # Not using the actual Curve contract
@@ -332,12 +334,12 @@ def pool(CurvePool, accounts, mock_lp_token, coin_a, coin_b):
 
 
 @pytest.fixture(scope="module")
-def fee_distributor(FeeDistributor, voting_escrow, ve_rbn_rewards, accounts, coin_a, chain):
+def fee_distributor(FeeDistributor, voting_escrow, ve_rbn_rewards, accounts, weth, chain):
     def f(t=None):
         if not t:
             t = chain.time()
         return FeeDistributor.deploy(
-            voting_escrow, ve_rbn_rewards, t, coin_a, accounts[0], accounts[0], {"from": accounts[0]}
+            voting_escrow, ve_rbn_rewards, t, weth, accounts[0], accounts[0], {"from": accounts[0]}
         )
 
     yield f

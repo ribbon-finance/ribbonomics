@@ -50,7 +50,6 @@ struct Point:
 
 WEEK: constant(uint256) = 7 * 86400
 TOKEN_CHECKPOINT_DEADLINE: constant(uint256) = 86400
-WETH_ADDRESS: constant(address) = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
 
 start_time: public(uint256)
 time_cursor: public(uint256)
@@ -104,10 +103,14 @@ def __init__(
     self.admin = _admin
     self.emergency_return = _emergency_return
 
+@external
+@payable
+def __default__():
+  return
 
 @internal
 def _checkpoint_token():
-    token_balance: uint256 = ERC20(self.token).balanceOf(self)
+    token_balance: uint256 = self.balance
     to_distribute: uint256 = token_balance - self.token_last_balance
     self.token_last_balance = token_balance
 
@@ -353,8 +356,8 @@ def claim(_addr: address = msg.sender, _claimPRewards: bool = False, _lock: bool
       log Claimed(_addr, amount, user_epoch, max_user_epoch)
 
     if amount != 0:
-        _transfer(_addr, amount)
         self.token_last_balance -= amount
+        send(_addr, amount)
 
     if _claimPRewards:
       lock: bool = _lock
@@ -411,8 +414,8 @@ def claim_many(_receivers: address[20]) -> bool:
           log Claimed(addr, amount, user_epoch, max_user_epoch)
 
         if amount != 0:
-            _transfer(addr, amount)
             total += amount
+            send(addr, amount)
 
     if total != 0:
         self.token_last_balance -= total
@@ -421,6 +424,7 @@ def claim_many(_receivers: address[20]) -> bool:
 
 
 @external
+@payable
 def burn(_coin: address, _amount: uint256) -> bool:
     """
     @notice Receive WETH into the contract and trigger a token checkpoint
@@ -433,10 +437,7 @@ def burn(_coin: address, _amount: uint256) -> bool:
     assert not self.is_killed
 
     ERC20(_coin).transferFrom(msg.sender, self, _amount)
-    weth_to_withdraw: uint256 = ERC20(WETH).balanceOf(self)
-
-    if weth_to_withdraw > 0:
-      WETH(WETH_ADDRESS).withdraw(weth_to_withdraw)
+    WETH(_coin).withdraw(_amount)
 
     if self.can_checkpoint_token and (block.timestamp > self.last_token_time + TOKEN_CHECKPOINT_DEADLINE):
         self._checkpoint_token()
@@ -489,12 +490,7 @@ def kill_me():
 
     self.is_killed = True
 
-    amount: uint256 = ERC20(token).balanceOf(self)
-
-    if token == WETH_ADDRESS:
-      amount = self.balance
-
-    _transfer(self.emergency_return, amount)
+    send(self.emergency_return, self.balance)
 
 @external
 def recover_balance(_coin: address) -> bool:
@@ -521,11 +517,3 @@ def recover_balance(_coin: address) -> bool:
         assert convert(response, bool)
 
     return True
-
-@internal
-def _transfer(_to: address, _amount: uint256):
-  token: address = self.token
-  if token == WETH_ADDRESS:
-    assert send(_to, _amount)
-    return
-  assert ERC20(token).transfer(_to, _amount)
