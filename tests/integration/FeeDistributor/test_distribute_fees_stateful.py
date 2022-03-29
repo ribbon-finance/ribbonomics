@@ -225,7 +225,7 @@ class StateMachine:
         assert self.fee_coin.balanceOf(self.distributor) < 100
 
 
-def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, coin_a, token):
+def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
     for i in range(5):
         # ensure accounts[:5] all have tokens that may be locked
         token.approve(voting_escrow, 2 ** 256 - 1, {"from": accounts[i]})
@@ -243,6 +243,6 @@ def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, fee_di
         distributor,
         accounts[:5],
         voting_escrow,
-        coin_a,
+        weth,
         settings={"stateful_step_count": 30},
     )
