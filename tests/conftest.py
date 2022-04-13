@@ -114,7 +114,7 @@ def ve_rbn_rewards(PenaltyDistributor, accounts, voting_escrow, token):
         ve_rbn_rewards = PenaltyDistributor.deploy(
             voting_escrow, t, token, accounts[0], accounts[0], {"from": accounts[0]}
         )
-        
+
         ve_rbn_rewards.toggle_allow_checkpoint_token({"from": accounts[0]})
 
         voting_escrow.set_reward_pool(ve_rbn_rewards)
@@ -345,7 +345,7 @@ def pool(CurvePool, accounts, mock_lp_token, coin_a, coin_b):
 
 
 @pytest.fixture(scope="module")
-def fee_distributor(FeeDistributor, voting_escrow, ve_rbn_rewards, accounts, weth, chain):
+def fee_distributor(FeeDistributor, voting_escrow, accounts, weth, chain):
     def f(t=None):
         if not t:
             t = chain.time()

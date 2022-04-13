@@ -209,6 +209,13 @@ class StateMachine:
 
         t0 = self.distributor.start_time()
         t1 = chain[-1].timestamp // WEEK * WEEK
+        # print(self.accounts[:5])
+        # for acct in self.accounts[:5]:
+        #     print(acct)
+        #     for w in range(t0, t1 + WEEK, WEEK):
+        #         print(w)
+        #         self.distributor.ve_for_at(acct, w)
+
         tokens_per_user_per_week = {
             acct: [
                 self.distributor.tokens_per_week(w)
@@ -225,7 +232,7 @@ class StateMachine:
         assert self.fee_coin.balanceOf(self.distributor) < 100
 
 
-def test_stateful(state_machine, accounts, voting_escrow, fee_distributor, weth, token):
+def test_stateful(state_machine, accounts, voting_escrow, fee_distributor, coin_a, token):
     for i in range(5):
         # ensure accounts[:5] all have tokens that may be locked
         token.approve(voting_escrow, 2 ** 256 - 1, {"from": accounts[i]})
@@ -243,6 +250,6 @@ def test_stateful(state_machine, accounts, voting_escrow, fee_distributor, weth,
         distributor,
         accounts[:5],
         voting_escrow,
-        weth,
+        coin_a,
         settings={"stateful_step_count": 30},
     )
