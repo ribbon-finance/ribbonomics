@@ -403,8 +403,8 @@ def claim_many(_receivers: address[20]) -> bool:
     return True
 
 @external
-def updateReward(_addr: address):
-    return
+def updateReward(_addr: address) -> bool:
+    return True
 
 @external
 def donate(_amount: uint256) -> bool:
