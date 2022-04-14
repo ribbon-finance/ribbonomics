@@ -6,7 +6,7 @@ WEEK = 86400 * 7
 
 
 @pytest.fixture(scope="module")
-def distributor(accounts, chain, fee_distributor, voting_escrow, token):
+def distributor(accounts, chain, fee_distributor, ve_rbn_rewards, voting_escrow, token):
     distributor = fee_distributor()
 
     for i in range(10):
@@ -23,7 +23,7 @@ def distributor(accounts, chain, fee_distributor, voting_escrow, token):
 )
 @settings(max_examples=10)
 def test_checkpoint_total_supply(
-    accounts, chain, distributor, voting_escrow, st_amount, st_locktime, st_sleep
+    accounts, chain, distributor, ve_rbn_rewards, voting_escrow, st_amount, st_locktime, st_sleep
 ):
     final_lock = 0
     for i in range(10):
