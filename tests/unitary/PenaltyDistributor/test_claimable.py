@@ -26,4 +26,4 @@ def test_claimable(alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_r
 
     balances = [token.balanceOf(i) for i in (alice, bob, charlie)]
     chain.undo()
-    assert ve_rbn_rewards.claim(alice {"from": alice}).return_value == ve_rbn_rewards.claimable(bob, {"from": bob})
+    assert ve_rbn_rewards.claim(alice, {"from": alice}).return_value == ve_rbn_rewards.claimable(bob, {"from": bob})

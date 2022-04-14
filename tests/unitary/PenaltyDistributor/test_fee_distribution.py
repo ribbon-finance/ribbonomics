@@ -133,4 +133,4 @@ def test_deposited_parallel(web3, chain, accounts, voting_escrow, ve_rbn_rewards
     balance_bob = token.balanceOf(bob)
 
     assert balance_alice == balance_bob
-    assert assert abs(balance_alice + balance_bob - 10 ** 19) < 20
+    assert abs(balance_alice + balance_bob - 10 ** 19) < 20

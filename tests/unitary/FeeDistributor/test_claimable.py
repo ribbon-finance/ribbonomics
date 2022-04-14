@@ -26,4 +26,4 @@ def test_claimable(alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_r
 
     balances = [i.balance() for i in (alice, bob, charlie)]
     chain.undo()
-    assert fee_distributor.claim(alice, False, False, {"from": alice}).return_value == fee_distributor.claimable(bob, {"from": bob})
+    assert fee_distributor.claim(alice, {"from": alice}).return_value == fee_distributor.claimable(bob, {"from": bob})
