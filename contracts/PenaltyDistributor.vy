@@ -92,6 +92,7 @@ def __init__(
     self.voting_escrow = _voting_escrow
     self.admin = _admin
     self.emergency_return = _emergency_return
+    self.can_checkpoint_token = True
 
 @internal
 def _checkpoint_token():
