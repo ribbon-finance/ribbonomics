@@ -108,15 +108,19 @@ def voting_escrow(VotingEscrow, accounts, token):
 
 @pytest.fixture(scope="module")
 def ve_rbn_rewards(PenaltyDistributor, accounts, voting_escrow, token, chain):
-    ve_rbn_rewards = PenaltyDistributor.deploy(
-        voting_escrow, chain.time(), token, accounts[0], accounts[0], {"from": accounts[0]}
-    )
+    def f(t=None):
+        if not t:
+            t = chain.time()
+        ve_rbn_rewards = PenaltyDistributor.deploy(
+            voting_escrow, t, token, accounts[0], accounts[0], {"from": accounts[0]}
+        )
 
-    ve_rbn_rewards.toggle_allow_checkpoint_token({"from": accounts[0]})
+        voting_escrow.set_reward_pool(ve_rbn_rewards, {"from": accounts[0]})
 
-    voting_escrow.set_reward_pool(ve_rbn_rewards, {"from": accounts[0]})
+        return ve_rbn_rewards
 
-    return ve_rbn_rewards
+    yield f
+
 
 @pytest.fixture(scope="module")
 def delegation_proxy(DelegationProxy, accounts, voting_escrow):
