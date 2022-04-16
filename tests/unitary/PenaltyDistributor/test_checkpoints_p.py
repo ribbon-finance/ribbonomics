@@ -5,12 +5,10 @@ WEEK = 86400 * 7
 
 @pytest.fixture(scope="module")
 def distributor(accounts, chain, ve_rbn_rewards, voting_escrow, token):
-    distributor = ve_rbn_rewards()
-
     token.approve(voting_escrow, 2 ** 256 - 1, {"from": accounts[0]})
     voting_escrow.create_lock(10 ** 21, chain.time() + WEEK * 52, {"from": accounts[0]})
 
-    yield distributor
+    yield ve_rbn_rewards
 
 
 def test_checkpoint_total_supply(accounts, chain, distributor, voting_escrow):
@@ -54,17 +52,3 @@ def test_claim_checkpoints_total_supply(accounts, chain, distributor, ve_rbn_rew
     distributor.claim({"from": accounts[0]})
 
     assert distributor.time_cursor() == start_time + WEEK
-
-
-def test_toggle_allow_checkpoint(accounts, chain, distributor, ve_rbn_rewards):
-
-    last_token_time = distributor.last_token_time()
-    chain.sleep(WEEK)
-
-    distributor.claim({"from": accounts[0]})
-    assert distributor.last_token_time() == last_token_time
-
-    distributor.toggle_allow_checkpoint_token({"from": accounts[0]})
-    tx = distributor.claim({"from": accounts[0]})
-
-    assert distributor.last_token_time() == tx.timestamp

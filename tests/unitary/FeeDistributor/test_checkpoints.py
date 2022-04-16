@@ -54,17 +54,3 @@ def test_claim_checkpoints_total_supply(accounts, chain, distributor, ve_rbn_rew
     distributor.claim({"from": accounts[0]})
 
     assert distributor.time_cursor() == start_time + WEEK
-
-
-def test_toggle_allow_checkpoint(accounts, chain, distributor, ve_rbn_rewards):
-
-    last_token_time = distributor.last_token_time()
-    chain.sleep(WEEK)
-
-    distributor.claim({"from": accounts[0]})
-    assert distributor.last_token_time() == last_token_time
-
-    distributor.toggle_allow_checkpoint_token({"from": accounts[0]})
-    tx = distributor.claim({"from": accounts[0]})
-
-    assert distributor.last_token_time() == tx.timestamp

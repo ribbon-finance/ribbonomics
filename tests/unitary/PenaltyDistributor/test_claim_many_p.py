@@ -15,7 +15,7 @@ def test_claim_many(alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_
     start_time = int(chain.time())
     chain.sleep(WEEK * 5)
 
-    ve_rbn_rewards = ve_rbn_rewards(t=start_time)
+    # ve_rbn_rewards = ve_rbn_rewards(t=start_time)
     token.transfer(ve_rbn_rewards, amount, {"from": alice})
     ve_rbn_rewards.checkpoint_token()
     chain.sleep(WEEK)
@@ -45,11 +45,9 @@ def test_claim_many_with_burn(alice, bob, charlie, accounts, chain, voting_escro
     start_time = int(chain.time())
     chain.sleep(WEEK * 5)
 
-    ve_rbn_rewards = ve_rbn_rewards(t=start_time)
-
     token.approve(ve_rbn_rewards, amount, {"from": alice})
     ve_rbn_rewards.donate(amount, {"from": alice})
-    assert ve_rbn_rewards.balance() == amount
+    assert token.balanceOf(ve_rbn_rewards) == amount
 
     ve_rbn_rewards.checkpoint_token()
     chain.sleep(WEEK)
@@ -81,13 +79,12 @@ def test_claim_many_same_account(
     start_time = int(chain.time())
     chain.sleep(WEEK * 5)
 
-    ve_rbn_rewards = ve_rbn_rewards(t=start_time)
     token.transfer(ve_rbn_rewards, amount, {"from": alice})
     ve_rbn_rewards.checkpoint_token()
     chain.sleep(WEEK)
     ve_rbn_rewards.checkpoint_token()
 
-    expected = ve_rbn_rewards.claim.call({"from": alice})
+    expected = ve_rbn_rewards.claim.call({"from": alice}) + token.balanceOf(alice)
 
     ve_rbn_rewards.claim_many([alice] * 20, {"from": alice})
 

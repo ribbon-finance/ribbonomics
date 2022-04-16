@@ -16,7 +16,6 @@ def test_claimable(alice, bob, charlie, accounts, chain, voting_escrow, ve_rbn_r
     start_time = int(chain.time())
     chain.sleep(WEEK * 5)
 
-    ve_rbn_rewards = ve_rbn_rewards(t=start_time)
     token.transfer(ve_rbn_rewards, amount, {"from": alice})
     ve_rbn_rewards.checkpoint_token()
     chain.sleep(WEEK)

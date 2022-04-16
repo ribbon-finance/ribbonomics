@@ -27,28 +27,28 @@ def test_multi_kill(ve_rbn_rewards, accounts):
     assert ve_rbn_rewards.is_killed()
 
 
-def test_killing_xfers_tokens(ve_rbn_rewards, accounts, weth):
-    accounts[3].transfer(ve_rbn_rewards, 31337)
+def test_killing_xfers_tokens(ve_rbn_rewards, accounts, token):
+    token.transfer(ve_rbn_rewards, 31337, {"from": accounts[0]})
 
-    balanceBefore = accounts[1].balance()
+    balanceBefore = token.balanceOf(accounts[1])
 
     ve_rbn_rewards.kill_me({"from": accounts[0]})
 
     assert ve_rbn_rewards.emergency_return() == accounts[1]
-    assert accounts[1].balance() - balanceBefore == 31337
+    assert  token.balanceOf(accounts[1]) - balanceBefore == 31337
 
 
-def test_multi_kill_token_xfer(ve_rbn_rewards, accounts, weth):
-    balanceBefore = accounts[1].balance()
+def test_multi_kill_token_xfer(ve_rbn_rewards, accounts, token):
+    balanceBefore = token.balanceOf(accounts[1])
 
-    accounts[3].transfer(ve_rbn_rewards, 10000)
+    token.transfer(ve_rbn_rewards, 30000, {"from": accounts[0]})
     ve_rbn_rewards.kill_me({"from": accounts[0]})
 
-    accounts[3].transfer(ve_rbn_rewards, 30000)
+    token.transfer(ve_rbn_rewards, 10000, {"from": accounts[0]})
     ve_rbn_rewards.kill_me({"from": accounts[0]})
 
     assert ve_rbn_rewards.emergency_return() == accounts[1]
-    assert accounts[1].balance() - balanceBefore == 40000
+    assert token.balanceOf(accounts[1]) - balanceBefore == 40000
 
 
 @pytest.mark.parametrize("idx", range(1, 3))
