@@ -7,13 +7,11 @@ WEEK = 86400 * 7
 
 @pytest.fixture(scope="module")
 def distributor(accounts, chain, ve_rbn_rewards, voting_escrow, token):
-    distributor = ve_rbn_rewards()
-
     for i in range(10):
         token.approve(voting_escrow, 2 ** 256 - 1, {"from": accounts[i]})
         token.transfer(accounts[i], 10 ** 21, {"from": accounts[0]})
 
-    yield distributor
+    yield ve_rbn_rewards
 
 
 @given(

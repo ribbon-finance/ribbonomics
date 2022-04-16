@@ -236,11 +236,10 @@ def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, token)
 
     # a week later we deploy the fee distributor
     chain.sleep(WEEK)
-    distributor = ve_rbn_rewards()
 
     state_machine(
         StateMachine,
-        distributor,
+        ve_rbn_rewards,
         accounts[:5],
         voting_escrow,
         token,
