@@ -5,12 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "interfaces/IFeeDistributor.sol";
-import "interfaces/IChainlink.sol";
-import "interfaces/IWETH.sol";
-import "interfaces/IWSTETH.sol";
-import "interfaces/ICRV.sol";
-import "interfaces/ISwapRouter.sol";
+import "./interfaces/IFeeDistributor.sol";
+import "./interfaces/IChainlink.sol";
+import "./interfaces/IWETH.sol";
+import "./interfaces/IWSTETH.sol";
+import "./interfaces/ICRV.sol";
+import "./interfaces/ISwapRouter.sol";
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 

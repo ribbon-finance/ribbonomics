@@ -4,5 +4,8 @@
     },
     "devDependencies": {
         "@openzeppelin/contracts": "^4.4.2"
+    },
+    "dependencies": {
+        "@uniswap/v3-periphery": "^1.4.0"
     }
 }
