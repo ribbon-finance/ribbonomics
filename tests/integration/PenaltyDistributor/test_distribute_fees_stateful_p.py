@@ -161,7 +161,7 @@ class StateMachine:
         chain.sleep(st_time)
 
         amount = int(st_amount * 10 ** 18)
-        tx = self.fee_coin._mint_for_testing(self.distributor.address, amount)
+        tx = self.fee_coin.transfer(self.distributor.address, amount, {"from": self.accounts[0]})
 
         if not self.distributor.can_checkpoint_token():
             self.distributor.toggle_allow_checkpoint_token()

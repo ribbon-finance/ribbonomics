@@ -162,7 +162,7 @@ class StateMachine:
 
         amount = int(st_amount * 10 ** 18)
         self.fee_coin.deposit({"from": self.accounts[0], "value": amount})
-        tx = self.fee_coin.transfer({"from": self.distributor.address, "value": amount})
+        tx = self.fee_coin.transfer(self.distributor.address, amount, {"from": self.accounts[0]})
 
         if not self.distributor.can_checkpoint_token():
             self.distributor.toggle_allow_checkpoint_token()
