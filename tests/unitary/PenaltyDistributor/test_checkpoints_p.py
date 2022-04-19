@@ -4,13 +4,11 @@ WEEK = 86400 * 7
 
 
 @pytest.fixture(scope="module")
-def distributor(accounts, chain, fee_distributor, voting_escrow, ve_rbn_rewards, token):
-    distributor = fee_distributor()
-
+def distributor(accounts, chain, ve_rbn_rewards, voting_escrow, token):
     token.approve(voting_escrow, 2 ** 256 - 1, {"from": accounts[0]})
     voting_escrow.create_lock(10 ** 21, chain.time() + WEEK * 52, {"from": accounts[0]})
 
-    yield distributor
+    yield ve_rbn_rewards
 
 
 def test_checkpoint_total_supply(accounts, chain, distributor, voting_escrow):

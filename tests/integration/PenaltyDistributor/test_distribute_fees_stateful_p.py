@@ -11,7 +11,7 @@ class StateMachine:
 
     st_acct = strategy("address", length=5)
     st_weeks = strategy("uint256", min_value=1, max_value=12)
-    st_amount = strategy("decimal", min_value=1, max_value=1, places=3)
+    st_amount = strategy("decimal", min_value=1, max_value=100, places=3)
     st_time = strategy("uint256", min_value=0, max_value=86400 * 3)
 
     def __init__(cls, distributor, accounts, voting_escrow, fee_coin):
@@ -25,12 +25,6 @@ class StateMachine:
         self.fees = {}
         self.user_claims = defaultdict(dict)
         self.total_fees = 10 ** 18
-
-        self.balances = {}
-
-        for acct in self.accounts[1:5]:
-            self.balances[acct.address] = acct.balance()
-
 
     def _check_active_lock(self, st_acct):
         # check if `st_acct` has an active lock
@@ -140,11 +134,11 @@ class StateMachine:
         """
         chain.sleep(st_time)
 
-        claimed = st_acct.balance()
+        claimed = self.fee_coin.balanceOf(st_acct)
 
         tx = self.distributor.claim({"from": st_acct})
 
-        claimed = st_acct.balance() - claimed
+        claimed = self.fee_coin.balanceOf(st_acct) - claimed
         self.user_claims[st_acct][tx.timestamp] = (
             claimed,
             self.distributor.time_cursor_of(st_acct),
@@ -167,8 +161,7 @@ class StateMachine:
         chain.sleep(st_time)
 
         amount = int(st_amount * 10 ** 18)
-
-        tx = self.accounts[0].transfer(self.distributor.address, amount)
+        tx = self.fee_coin._mint_for_testing(self.distributor.address, amount)
 
         if not self.distributor.can_checkpoint_token():
             self.distributor.toggle_allow_checkpoint_token()
@@ -191,7 +184,7 @@ class StateMachine:
         chain.sleep(st_time)
 
         amount = int(st_amount * 10 ** 18)
-        tx = self.accounts[0].transfer(self.distributor.address, amount)
+        tx = self.fee_coin._mint_for_testing(self.distributor.address, amount)
 
         self.fees[tx.timestamp] = amount
         self.total_fees += amount
@@ -202,7 +195,7 @@ class StateMachine:
         """
         if not self.distributor.can_checkpoint_token():
             # if no token checkpoint occured, add 100,000 tokens prior to teardown
-            self.rule_transfer_fees(100, 0)
+            self.rule_transfer_fees(100000, 0)
 
         # Need two checkpoints to get tokens fully distributed
         # Because tokens for current week are obtained in the next week
@@ -216,7 +209,6 @@ class StateMachine:
 
         t0 = self.distributor.start_time()
         t1 = chain[-1].timestamp // WEEK * WEEK
-
         tokens_per_user_per_week = {
             acct: [
                 self.distributor.tokens_per_week(w)
@@ -224,16 +216,16 @@ class StateMachine:
                 // self.distributor.ve_supply(w)
                 for w in range(t0, t1 + WEEK, WEEK)
             ]
-            for acct in self.accounts[1:5]
+            for acct in self.accounts[:5]
         }
 
-        for acct in self.accounts[1:5]:
-            assert sum(tokens_per_user_per_week[acct]) == (acct.balance() - self.balances[acct.address])
+        for acct in self.accounts:
+            assert sum(tokens_per_user_per_week[acct]) == self.fee_coin.balanceOf(acct)
 
-        assert self.distributor.balance() < 100
+        assert self.fee_coin.balanceOf(self.distributor) < 100
 
 
-def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
+def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, ve_rbn_rewards_st, coin_a, token):
     for i in range(5):
         # ensure accounts[:5] all have tokens that may be locked
         token.approve(voting_escrow, 2 ** 256 - 1, {"from": accounts[i]})
@@ -244,13 +236,14 @@ def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, fee_di
 
     # a week later we deploy the fee distributor
     chain.sleep(WEEK)
-    distributor = fee_distributor()
+
+    distributor = ve_rbn_rewards_st(None, coin_a)
 
     state_machine(
         StateMachine,
         distributor,
         accounts[:5],
         voting_escrow,
-        weth,
+        coin_a,
         settings={"stateful_step_count": 30},
     )

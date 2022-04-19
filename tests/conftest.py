@@ -107,10 +107,27 @@ def voting_escrow(VotingEscrow, accounts, token):
     )
 
 @pytest.fixture(scope="module")
-def ve_rbn_rewards(VeRBNRewards, accounts, voting_escrow, token):
-    ve_rbn_rewards = VeRBNRewards.deploy(voting_escrow, token, accounts[0], {"from": accounts[0]})
-    voting_escrow.set_reward_pool(ve_rbn_rewards)
-    yield ve_rbn_rewards
+def ve_rbn_rewards(PenaltyDistributor, accounts, voting_escrow, token, chain):
+    ve_rbn_rewards = PenaltyDistributor.deploy(
+        voting_escrow, chain.time(), token, accounts[0], accounts[0], {"from": accounts[0]}
+    )
+
+    voting_escrow.set_reward_pool(ve_rbn_rewards, {"from": accounts[0]})
+
+    return ve_rbn_rewards
+
+@pytest.fixture(scope="module")
+def ve_rbn_rewards_st(PenaltyDistributor, accounts, voting_escrow, token, coin_a, chain):
+    def f(t=None, c=None):
+        if not t:
+            t = chain.time()
+        if not c:
+            c = token
+        return PenaltyDistributor.deploy(
+            voting_escrow, t, c, accounts[0], accounts[0], {"from": accounts[0]}
+        )
+
+    yield f
 
 @pytest.fixture(scope="module")
 def delegation_proxy(DelegationProxy, accounts, voting_escrow):
@@ -334,12 +351,12 @@ def pool(CurvePool, accounts, mock_lp_token, coin_a, coin_b):
 
 
 @pytest.fixture(scope="module")
-def fee_distributor(FeeDistributor, voting_escrow, ve_rbn_rewards, accounts, weth, chain):
+def fee_distributor(FeeDistributor, voting_escrow, accounts, weth, chain):
     def f(t=None):
         if not t:
             t = chain.time()
         return FeeDistributor.deploy(
-            voting_escrow, ve_rbn_rewards, t, weth, accounts[0], accounts[0], {"from": accounts[0]}
+            voting_escrow, t, weth, accounts[0], accounts[0], {"from": accounts[0]}
         )
 
     yield f
