@@ -26,6 +26,12 @@ class StateMachine:
         self.user_claims = defaultdict(dict)
         self.total_fees = 10 ** 18
 
+        self.balances = {}
+
+        for acct in self.accounts[1:5]:
+            self.balances[acct.address] = acct.balance()
+
+
     def _check_active_lock(self, st_acct):
         # check if `st_acct` has an active lock
         if st_acct not in self.locked_until:
@@ -198,11 +204,6 @@ class StateMachine:
             # if no token checkpoint occured, add 100,000 tokens prior to teardown
             self.rule_transfer_fees(100, 0)
 
-        balances = {}
-
-        for acct in self.accounts:
-            balances[acct.address] = acct.balance()
-
         # Need two checkpoints to get tokens fully distributed
         # Because tokens for current week are obtained in the next week
         # And that is by design
@@ -223,11 +224,11 @@ class StateMachine:
                 // self.distributor.ve_supply(w)
                 for w in range(t0, t1 + WEEK, WEEK)
             ]
-            for acct in self.accounts[:5]
+            for acct in self.accounts[1:5]
         }
 
-        for acct in self.accounts:
-            assert sum(tokens_per_user_per_week[acct]) == (acct.balance() - balances[acct.address])
+        for acct in self.accounts[1:5]:
+            assert sum(tokens_per_user_per_week[acct]) == (acct.balance() - self.balances[acct.address])
 
         assert self.distributor.balance() < 100
 
