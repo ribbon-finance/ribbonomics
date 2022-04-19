@@ -11,7 +11,7 @@ class StateMachine:
 
     st_acct = strategy("address", length=5)
     st_weeks = strategy("uint256", min_value=1, max_value=12)
-    st_amount = strategy("decimal", min_value=1, max_value=100, places=3)
+    st_amount = strategy("decimal", min_value=1, max_value=1, places=3)
     st_time = strategy("uint256", min_value=0, max_value=86400 * 3)
 
     def __init__(cls, distributor, accounts, voting_escrow, fee_coin):
@@ -134,11 +134,11 @@ class StateMachine:
         """
         chain.sleep(st_time)
 
-        claimed = self.fee_coin.balanceOf(st_acct)
+        claimed = st_acct.balance()
 
         tx = self.distributor.claim({"from": st_acct})
 
-        claimed = self.fee_coin.balanceOf(st_acct) - claimed
+        claimed = st_acct.balance() - claimed
         self.user_claims[st_acct][tx.timestamp] = (
             claimed,
             self.distributor.time_cursor_of(st_acct),
@@ -161,8 +161,8 @@ class StateMachine:
         chain.sleep(st_time)
 
         amount = int(st_amount * 10 ** 18)
-        self.fee_coin.deposit({"from": self.accounts[0], "value": amount})
-        tx = self.fee_coin.transfer(self.distributor.address, amount, {"from": self.accounts[0]})
+
+        tx = self.accounts[0].transfer(self.distributor.address, amount)
 
         if not self.distributor.can_checkpoint_token():
             self.distributor.toggle_allow_checkpoint_token()
@@ -185,7 +185,7 @@ class StateMachine:
         chain.sleep(st_time)
 
         amount = int(st_amount * 10 ** 18)
-        tx = self.fee_coin._mint_for_testing(self.distributor.address, amount)
+        tx = self.accounts[0].transfer(self.distributor.address, amount)
 
         self.fees[tx.timestamp] = amount
         self.total_fees += amount
@@ -196,7 +196,12 @@ class StateMachine:
         """
         if not self.distributor.can_checkpoint_token():
             # if no token checkpoint occured, add 100,000 tokens prior to teardown
-            self.rule_transfer_fees(100000, 0)
+            self.rule_transfer_fees(100, 0)
+
+        balances = {}
+
+        for acct in self.accounts:
+            balances[acct.address] = acct.balance()
 
         # Need two checkpoints to get tokens fully distributed
         # Because tokens for current week are obtained in the next week
@@ -210,6 +215,7 @@ class StateMachine:
 
         t0 = self.distributor.start_time()
         t1 = chain[-1].timestamp // WEEK * WEEK
+
         tokens_per_user_per_week = {
             acct: [
                 self.distributor.tokens_per_week(w)
@@ -221,9 +227,9 @@ class StateMachine:
         }
 
         for acct in self.accounts:
-            assert sum(tokens_per_user_per_week[acct]) == self.fee_coin.balanceOf(acct)
+            assert sum(tokens_per_user_per_week[acct]) == (acct.balance() - balances[acct.address])
 
-        assert self.fee_coin.balanceOf(self.distributor) < 100
+        assert self.distributor.balance() < 100
 
 
 def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):

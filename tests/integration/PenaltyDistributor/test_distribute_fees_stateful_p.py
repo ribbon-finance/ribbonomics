@@ -161,7 +161,7 @@ class StateMachine:
         chain.sleep(st_time)
 
         amount = int(st_amount * 10 ** 18)
-        tx = self.fee_coin.transfer(self.distributor.address, amount, {"from": self.accounts[0]})
+        tx = self.fee_coin._mint_for_testing(self.distributor.address, amount)
 
         if not self.distributor.can_checkpoint_token():
             self.distributor.toggle_allow_checkpoint_token()
@@ -225,7 +225,7 @@ class StateMachine:
         assert self.fee_coin.balanceOf(self.distributor) < 100
 
 
-def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, token):
+def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, ve_rbn_rewards_st, coin_a, token):
     for i in range(5):
         # ensure accounts[:5] all have tokens that may be locked
         token.approve(voting_escrow, 2 ** 256 - 1, {"from": accounts[i]})
@@ -237,11 +237,13 @@ def test_stateful(state_machine, accounts, voting_escrow, ve_rbn_rewards, token)
     # a week later we deploy the fee distributor
     chain.sleep(WEEK)
 
+    distributor = ve_rbn_rewards_st(None, coin_a)
+
     state_machine(
         StateMachine,
-        ve_rbn_rewards,
+        distributor,
         accounts[:5],
         voting_escrow,
-        token,
+        coin_a,
         settings={"stateful_step_count": 30},
     )

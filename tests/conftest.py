@@ -117,12 +117,14 @@ def ve_rbn_rewards(PenaltyDistributor, accounts, voting_escrow, token, chain):
     return ve_rbn_rewards
 
 @pytest.fixture(scope="module")
-def ve_rbn_rewards_st(PenaltyDistributor, accounts, voting_escrow, token, chain):
-    def f(t=None):
+def ve_rbn_rewards_st(PenaltyDistributor, accounts, voting_escrow, token, coin_a, chain):
+    def f(t=None, c=None):
         if not t:
             t = chain.time()
+        if not c:
+            c = token
         return PenaltyDistributor.deploy(
-            voting_escrow, t, token, accounts[0], accounts[0], {"from": accounts[0]}
+            voting_escrow, t, c, accounts[0], accounts[0], {"from": accounts[0]}
         )
 
     yield f
