@@ -10,7 +10,7 @@ import "./interfaces/IChainlink.sol";
 import "./interfaces/IWETH.sol";
 import "./interfaces/IWSTETH.sol";
 import "./interfaces/ICRV.sol";
-import "../interfaces/IYVUSDC.sol";
+import "./interfaces/IYVUSDC.sol";
 import "./interfaces/ISwapRouter.sol";
 import "./libraries/TransferHelper.sol";
 
