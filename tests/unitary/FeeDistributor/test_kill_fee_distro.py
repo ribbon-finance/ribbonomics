@@ -79,3 +79,11 @@ def test_cannot_claim_many_after_killed(fee_distributor, accounts, alice, idx):
 
     with brownie.reverts():
         fee_distributor.claim_many([alice] * 20, {"from": accounts[idx]})
+
+def test_recover_eth_balance(accounts, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
+    ethBalBefore = accounts[1].balance()
+    accounts[3].transfer(fee_distributor, "10 ether")
+    fee_distributor.recover_eth_balance({"from": accounts[0]})
+    ethBalAfter = accounts[1].balance()
+
+    assert (ethBalAfter - ethBalBefore) == 10 * 10 ** 18
