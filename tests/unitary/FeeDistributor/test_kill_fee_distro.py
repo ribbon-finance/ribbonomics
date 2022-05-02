@@ -80,6 +80,14 @@ def test_cannot_claim_many_after_killed(fee_distributor, accounts, alice, idx):
     with brownie.reverts():
         fee_distributor.claim_many([alice] * 20, {"from": accounts[idx]})
 
+def test_set_emergency_return(accounts, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
+    emergency_return_before = fee_distributor.emergency_return()
+    fee_distributor.set_emergency_return(accounts[3], {"from": accounts[0]})
+    emergency_return_after = fee_distributor.emergency_return()
+
+    assert emergency_return_before != emergency_return_after
+    assert emergency_return_after == accounts[3]
+
 def test_recover_eth_balance(accounts, chain, voting_escrow, ve_rbn_rewards, fee_distributor, weth, token):
     ethBalBefore = accounts[1].balance()
     accounts[3].transfer(fee_distributor, "10 ether")
